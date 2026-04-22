@@ -1,0 +1,765 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Jerrod OS // v2.6</title>
+<meta name="viewport" content="width=1440" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: oklch(0.945 0.018 80);
+    --bg-2: oklch(0.93 0.020 80);
+    --card: oklch(0.965 0.013 82);
+    --card-2: oklch(0.955 0.015 82);
+    --ink: oklch(0.22 0.015 60);
+    --ink-2: oklch(0.38 0.015 60);
+    --ink-3: oklch(0.55 0.012 60);
+    --ink-4: oklch(0.68 0.010 60);
+    --line: oklch(0.86 0.013 75);
+    --line-2: oklch(0.90 0.013 75);
+    --accent: oklch(0.66 0.155 45);
+    --accent-2: oklch(0.60 0.14 40);
+    --ok: oklch(0.62 0.10 150);
+    --ring: oklch(0.72 0.14 50);
+    --dark: oklch(0.22 0.015 60);
+    --serif: "Fraunces", "Times New Roman", serif;
+    --sans: "Inter", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(1200px 600px at 80% -10%, oklch(0.965 0.020 80) 0%, transparent 60%),
+      radial-gradient(900px 500px at 0% 110%, oklch(0.92 0.025 75) 0%, transparent 60%),
+      var(--bg);
+    padding: 14px 18px 22px;
+    font-feature-settings: "ss01","cv11","tnum";
+  }
+  .mono{font-family:var(--mono); letter-spacing: 0.04em; text-transform:uppercase; font-size: 10.5px; color: var(--ink-3); font-weight:500}
+  .serif{font-family:var(--serif); font-weight:500;}
+
+  /* ===== Top bar ===== */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 2px 4px 14px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+  .topbar .left,.topbar .right{display:flex; gap:18px; align-items:center}
+  .topbar .right span{display:inline-flex; gap:6px; align-items:center}
+  .dot{width:6px; height:6px; border-radius:50%; background: var(--accent); display:inline-block; box-shadow: 0 0 0 3px oklch(0.66 0.155 45 / .18);}
+  .pill-close{display:inline-flex; gap:4px; margin-left:10px}
+  .pill-close i{width:12px; height:12px; border-radius:50%; background:var(--ink); display:inline-block; opacity:.15}
+  .pill-close i.x{background: var(--ink); opacity:.85}
+
+  /* ===== Grid ===== */
+  .grid{
+    display:grid;
+    grid-template-columns: 240px 1fr 1fr 240px;
+    grid-template-rows: 136px 1fr 1fr;
+    gap: 12px;
+    height: calc(100vh - 60px);
+    min-height: 820px;
+  }
+  .card{
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px 16px;
+    position:relative;
+    overflow:hidden;
+    box-shadow: 0 1px 0 oklch(1 0 0 / .6) inset, 0 1px 2px oklch(0 0 0 / .03);
+  }
+  .card-head{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom: 10px;
+  }
+  .card-head .mono{color: var(--ink-3)}
+  .card-head .mono em{font-style:normal; color: var(--ink-2); margin-right:4px}
+
+  /* Speaker */
+  .speaker{grid-column: 1/2; grid-row: 1/2; display:flex; flex-direction:column;}
+  .speaker .body{display:flex; gap:12px; align-items:center; flex:1}
+  .avatar{
+    width:56px; height:56px; border-radius: 12px;
+    background:
+      radial-gradient(circle at 30% 30%, oklch(0.55 0.08 30) 0%, oklch(0.32 0.05 40) 60%, oklch(0.22 0.02 40) 100%);
+    position:relative; overflow:hidden; flex-shrink:0;
+    border: 1px solid var(--line);
+  }
+  .avatar::before{
+    content:""; position:absolute; inset:0;
+    background:
+      radial-gradient(20px 26px at 50% 38%, oklch(0.75 0.04 40) 0%, transparent 70%),
+      radial-gradient(40px 30px at 50% 92%, oklch(0.32 0.05 220) 0%, transparent 65%),
+      radial-gradient(30px 30px at 50% 105%, oklch(0.28 0.04 30) 0%, transparent 60%);
+  }
+  .name{font-family: var(--serif); font-size: 20px; font-weight:500; line-height:1.1}
+  .name em{font-style: italic; font-weight:400}
+  .meta-row{display:flex; gap: 22px; margin-top: 10px}
+  .meta-row .k{font-family: var(--mono); font-size:10px; letter-spacing:.08em; color:var(--ink-3); text-transform:uppercase}
+  .meta-row .v{font-family: var(--mono); font-size:11px; color:var(--ink); letter-spacing:.06em; margin-top:3px; text-transform:uppercase; font-weight:500}
+
+  /* Session (hero greeting) */
+  .session{grid-column: 2/4; grid-row: 1/2; display:flex; flex-direction:column; justify-content:space-between;}
+  .session .hero{display:flex; align-items:flex-end; justify-content:space-between; flex:1; padding-top:4px;}
+  .hero-l h1{
+    margin:0; font-family: var(--serif); font-weight:500;
+    font-size: 44px; line-height: 1; letter-spacing: -0.01em;
+  }
+  .hero-l h1 em{font-style: italic; font-weight:400}
+  .hero-l .sub{margin-top: 10px; font-family: var(--mono); font-size: 10.5px; letter-spacing:.12em; color: var(--ink-3); text-transform:uppercase}
+  .hero-r{text-align:right}
+  .clock{
+    display:inline-flex; align-items:baseline; gap:8px;
+    font-family: var(--serif); font-weight: 500;
+    font-size: 56px; line-height: .95; letter-spacing:-.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .clock .sep{font-weight:400; color: var(--ink-2); margin: 0 2px}
+  .clock .s{font-size:20px; color: var(--ink-3); margin-left:4px; align-self:flex-end; margin-bottom:6px}
+  .hero-r .sub{margin-top: 4px; font-family: var(--mono); font-size: 10.5px; letter-spacing:.12em; color: var(--ink-3); text-transform:uppercase}
+
+  /* Vitals */
+  .vitals{grid-column: 4/5; grid-row: 1/3; display:flex; flex-direction:column; gap: 10px;}
+  .vitals .steps{display:flex; align-items:baseline; gap:8px; margin-top:2px}
+  .vitals .steps b{font-family: var(--serif); font-weight:500; font-size: 34px; letter-spacing:-.01em}
+  .vitals .steps .u{font-family:var(--mono); font-size: 10px; letter-spacing:.12em; color:var(--ink-3); text-transform:uppercase}
+  .delta{font-family:var(--mono); font-size:10px; color: var(--ok); letter-spacing:.08em; text-transform:uppercase}
+  .spark{height: 64px; margin: 6px -4px 4px; position:relative}
+  .goal{font-family: var(--mono); font-size: 10px; color: var(--ink-3); display:flex; justify-content:space-between; letter-spacing:.08em; text-transform:uppercase}
+  .vitals hr{border:0; border-top:1px solid var(--line-2); margin: 10px 0 6px}
+  .bios{display:grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; margin-top:2px}
+  .bio .l{font-family:var(--mono); font-size: 10px; color:var(--ink-3); letter-spacing:.1em; text-transform:uppercase}
+  .bio .v{font-family: var(--serif); font-weight:500; font-size: 22px; letter-spacing:-.01em; margin-top:1px}
+  .bio .v small{font-family: var(--mono); font-size: 10px; color:var(--ink-3); font-weight:400; letter-spacing:.08em; margin-left:2px}
+  .rings{display:grid; grid-template-columns: repeat(3,1fr); gap:8px; margin-top: 10px}
+  .ring{display:flex; flex-direction:column; align-items:center; gap:4px}
+  .ring svg{display:block}
+  .ring .n{font-family: var(--mono); font-size: 10.5px; letter-spacing:.04em; font-weight:500}
+  .ring .l{font-family: var(--mono); font-size: 9.5px; letter-spacing:.14em; color:var(--ink-3); text-transform:uppercase}
+
+  /* Left column stack: Reading / Habits / Thought */
+  .stack{grid-column:1/2; grid-row:2/4; display:grid; grid-template-rows: 1fr 1fr 1fr; gap: 12px;}
+  .stack .card{padding: 12px 14px}
+
+  /* Reading */
+  .reading{display:flex; flex-direction:column}
+  .reading .body{display:flex; gap: 12px; align-items:flex-start; margin-top: 6px; flex:1}
+  .book{
+    width: 58px; height: 82px; flex-shrink:0; border-radius: 3px;
+    background:
+      linear-gradient(110deg, oklch(0.42 0.08 30) 0%, oklch(0.34 0.06 25) 100%);
+    box-shadow:
+      inset 2px 0 0 oklch(0 0 0 / .28),
+      inset -1px 0 0 oklch(1 0 0 / .06),
+      2px 3px 6px oklch(0 0 0 / .12);
+    position:relative; overflow:hidden;
+    padding: 10px 8px;
+    display:flex; flex-direction:column; justify-content:space-between;
+  }
+  .book::after{content:""; position:absolute; left:4px; top:0; bottom:0; width:1px; background: oklch(0 0 0 / .35)}
+  .book .bt{font-family: var(--serif); font-style: italic; font-size: 9px; color: oklch(0.92 0.04 70); line-height:1.1; letter-spacing:.02em}
+  .book .ba{font-family: var(--mono); font-size: 6.5px; color: oklch(0.85 0.03 70); letter-spacing:.14em; text-transform:uppercase}
+  .reading .info{flex:1; min-width:0}
+  .reading .btitle{font-family: var(--serif); font-weight:500; font-size: 17px; line-height:1.1; letter-spacing:-.005em}
+  .reading .btitle em{font-style:italic; font-weight:400}
+  .reading .bauthor{font-family: var(--mono); font-size: 10px; color: var(--ink-3); letter-spacing:.08em; text-transform:uppercase; margin-top: 3px}
+  .reading .pg{font-family: var(--mono); font-size: 10px; color: var(--ink-3); letter-spacing:.08em; text-transform:uppercase; margin-top: 10px; display:flex; justify-content:space-between}
+  .reading .pbar{height:3px; background: var(--line-2); border-radius: 3px; margin-top: 5px; overflow:hidden}
+  .reading .pbar i{display:block; height:100%; width:64%; background: var(--accent)}
+  .reading .next{
+    margin-top: 10px; padding-top: 9px; border-top: 1px dashed var(--line-2);
+    display:flex; justify-content:space-between; align-items:baseline; gap:8px;
+  }
+  .reading .next .lbl{font-family: var(--mono); font-size: 9.5px; letter-spacing:.12em; text-transform:uppercase; color: var(--ink-3); flex-shrink:0}
+  .reading .next .tl{font-family: var(--serif); font-style:italic; font-size: 13px; color: var(--ink); text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+
+  /* Habits */
+  .habits{display:flex; flex-direction:column}
+  .habits .row{display:grid; grid-template-columns: 72px 1fr auto; gap: 10px; align-items:center; margin-top: 8px; font-size: 11.5px}
+  .habits .row:first-of-type{margin-top: 4px}
+  .habits .hlbl{font-family: var(--mono); font-size: 10px; letter-spacing:.06em; text-transform:uppercase; color: var(--ink-2)}
+  .habits .dots{display:flex; gap: 3px}
+  .habits .dots i{
+    display:block; width: 10px; height: 10px; border-radius: 2.5px;
+    background: oklch(0.90 0.015 75);
+  }
+  .habits .dots i.l1{background: oklch(0.82 0.06 45 / .45)}
+  .habits .dots i.l2{background: oklch(0.72 0.11 45 / .75)}
+  .habits .dots i.l3{background: var(--accent)}
+  .habits .dots i.miss{background: oklch(0.88 0.010 75); box-shadow: inset 0 0 0 1px var(--line)}
+  .habits .streak{font-family: var(--mono); font-size: 10.5px; font-weight:500; letter-spacing:.04em; color: var(--ink)}
+  .habits .streak small{color: var(--ink-3); font-weight:400; letter-spacing:.1em; margin-left:2px}
+  .habits .foot{margin-top: auto; padding-top: 10px; display:flex; justify-content:space-between; font-family: var(--mono); font-size: 9.5px; color: var(--ink-3); letter-spacing:.1em; text-transform:uppercase; border-top:1px dashed var(--line-2)}
+
+  /* Thought */
+  .thought{display:flex; flex-direction:column}
+  .thought blockquote{
+    margin: 4px 0 0; flex:1;
+    font-family: var(--serif); font-weight:400; font-style: italic;
+    font-size: 17px; line-height: 1.28; letter-spacing: -.005em;
+    color: var(--ink);
+    display:flex; align-items:center;
+    position:relative; padding-left: 14px;
+  }
+  .thought blockquote::before{
+    content:""; position:absolute; left:0; top: 6px; bottom: 6px; width: 2px; background: var(--accent);
+  }
+  .thought .attr{
+    display:flex; justify-content:space-between; align-items:baseline;
+    font-family: var(--mono); font-size: 10px; color: var(--ink-3); letter-spacing:.1em; text-transform:uppercase;
+    padding-top: 10px; margin-top: 10px; border-top: 1px dashed var(--line-2);
+  }
+  .thought .attr b{color: var(--ink-2); font-weight:500; letter-spacing:.08em}
+
+  /* Calendar */
+  .calendar{grid-column: 2/3; grid-row: 2/4; display:flex; flex-direction:column}
+  .calendar h2{font-family:var(--serif); font-weight:500; font-size: 22px; margin: 2px 0 10px; letter-spacing:-.01em}
+  .calendar h2 em{font-style:italic; font-weight:400}
+  .days{display:grid; grid-template-columns: repeat(7,1fr); gap: 6px; margin-bottom: 14px}
+  .day{
+    border:1px solid var(--line-2); border-radius: 8px; padding: 8px 0 9px; text-align:center;
+    background: oklch(0.97 0.010 82);
+    cursor:pointer; transition: background .15s, transform .15s;
+  }
+  .day:hover{background: oklch(0.95 0.013 82)}
+  .day .wd{font-family: var(--mono); font-size: 9.5px; color: var(--ink-3); letter-spacing:.1em; text-transform:uppercase}
+  .day .dn{font-family: var(--serif); font-weight:500; font-size: 18px; margin-top:2px}
+  .day.active{background: var(--dark); color: oklch(0.96 0.01 80); border-color: var(--dark)}
+  .day.active .wd{color: oklch(0.75 0.02 80)}
+  .sched{display:flex; flex-direction:column; gap: 14px; padding-right: 4px; overflow:auto}
+  .ev{display:grid; grid-template-columns: 80px 1fr auto; gap: 14px; align-items:flex-start}
+  .ev .t{font-family: var(--mono); font-size: 10.5px; letter-spacing:.08em; color: var(--ink-3); padding-top:3px; text-transform:uppercase}
+  .ev .t b{color: var(--ink); font-weight:500; margin-right:6px}
+  .ev .title{font-family: var(--sans); font-weight:600; font-size: 14px; color: var(--ink)}
+  .ev .desc{font-family: var(--sans); font-size: 12px; color: var(--ink-3); margin-top:2px}
+  .ev .marker{width:6px; height:6px; border-radius:50%; background: var(--line); margin-top:8px}
+  .ev.now .marker{background: var(--accent); box-shadow: 0 0 0 3px oklch(0.66 0.155 45 / .18)}
+
+  /* Inbox */
+  .inbox{grid-column: 3/4; grid-row: 2/3;}
+  .inbox .list{display:flex; flex-direction:column; gap: 2px; margin-top:4px}
+  .inbox .row{display:grid; grid-template-columns: 32px 1fr auto; gap: 12px; align-items:center; padding: 10px 4px; border-top:1px solid var(--line-2)}
+  .inbox .row:first-child{border-top:0}
+  .ava{width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family: var(--mono); font-size: 10.5px; font-weight:500; color: oklch(0.3 0.02 60); letter-spacing:.02em;}
+  .ava.a{background: oklch(0.88 0.06 45); color: oklch(0.35 0.08 40)}
+  .ava.b{background: oklch(0.86 0.05 140); color: oklch(0.32 0.06 140)}
+  .ava.c{background: oklch(0.85 0.055 240); color: oklch(0.32 0.07 250)}
+  .ava.d{background: oklch(0.86 0.05 30); color: oklch(0.35 0.08 25)}
+  .inbox .name{font-weight:600; font-size: 13px}
+  .inbox .prev{font-size: 12px; color: var(--ink-3); margin-top:2px}
+  .inbox .tag{display:inline-block; font-family: var(--mono); font-size: 9px; padding: 2px 6px; border-radius: 4px; background: var(--accent); color: oklch(0.98 0.01 80); margin-left: 6px; letter-spacing:.12em; text-transform:uppercase; vertical-align: 2px}
+  .inbox .time{font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); letter-spacing:.06em}
+
+  /* Now Playing */
+  .playing{grid-column: 3/4; grid-row: 3/4; display:flex; flex-direction:column}
+  .np{display:flex; gap: 14px; align-items:center; margin-top:4px}
+  .cover{
+    width:72px; height:72px; border-radius:8px; flex-shrink:0; position:relative; overflow:hidden;
+    background: linear-gradient(135deg, oklch(0.55 0.12 40), oklch(0.35 0.08 30));
+    box-shadow: inset 0 0 0 1px oklch(0 0 0 / .1);
+  }
+  .cover::after{
+    content:""; position:absolute; inset:8px; border-radius:50%;
+    background: radial-gradient(circle at center, oklch(0.2 0.02 40) 0%, oklch(0.22 0.025 40) 30%, oklch(0.3 0.04 40) 32%, oklch(0.2 0.02 40) 60%, oklch(0.28 0.035 40) 62%, oklch(0.2 0.02 40) 100%);
+    box-shadow: inset 0 0 0 1px oklch(0 0 0 / .2), 0 0 0 1px oklch(0.45 0.08 40);
+  }
+  .cover::before{
+    content:""; position:absolute; top:50%; left:50%; width:10px; height:10px; border-radius:50%; background: oklch(0.75 0.1 55); transform:translate(-50%,-50%); z-index:2;
+  }
+  .np-meta .title{font-family: var(--serif); font-weight:500; font-size: 22px; letter-spacing:-.01em}
+  .np-meta .sub{font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); letter-spacing:.1em; text-transform:uppercase; margin-top:2px}
+  .wave{height: 42px; margin: 14px 0 6px; display:flex; align-items:center; gap: 2px}
+  .wave i{display:block; width:3px; border-radius:2px; background: var(--ink); flex:1}
+  .wave i.played{background: var(--ink)}
+  .wave i.future{background: oklch(0.80 0.013 75)}
+  .np-ctrl{display:flex; justify-content:space-between; align-items:center; font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); letter-spacing:.06em}
+  .np-ctrl .ctrls{display:flex; gap: 10px; align-items:center; color: var(--ink)}
+  .np-ctrl button{background:none; border:0; padding: 4px; cursor:pointer; color: var(--ink); display:inline-flex; align-items:center; justify-content:center}
+  .np-ctrl button.play{width:28px; height:28px; border-radius:50%; background: var(--ink); color: var(--card)}
+
+  /* Project */
+  .project{grid-column: 4/5; grid-row: 3/4; display:flex; flex-direction:column}
+  .project h3{font-family: var(--serif); font-weight:500; font-size: 18px; margin: 4px 0 0; letter-spacing:-.01em}
+  .project h3 em{font-style:italic; font-weight:400}
+  .project .bc{font-family: var(--mono); font-size: 10px; color: var(--ink-3); letter-spacing:.1em; text-transform:uppercase; margin-top:3px}
+  .progress{margin-top:12px}
+  .progress .lab{display:flex; justify-content:space-between; font-family:var(--mono); font-size:10px; color:var(--ink-3); letter-spacing:.1em; text-transform:uppercase}
+  .progress .bar{height: 4px; background: var(--line-2); border-radius: 3px; margin-top:6px; overflow:hidden}
+  .progress .bar i{display:block; height:100%; background: var(--ink); border-radius:3px;}
+  .tasks{display:flex; flex-direction:column; gap: 8px; margin-top: 12px}
+  .task{display:flex; gap: 10px; align-items:center; font-size: 12.5px; cursor:pointer; user-select:none}
+  .task .box{
+    width:14px; height:14px; border-radius:4px; border:1.5px solid var(--ink-4); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    transition: background .15s, border-color .15s;
+  }
+  .task.done .box{background: var(--ink); border-color: var(--ink)}
+  .task.done .box svg{opacity:1}
+  .task .box svg{opacity:0; color: var(--card)}
+  .task.done .label{color: var(--ink-3); text-decoration: line-through; text-decoration-thickness: 1px}
+
+  /* fine accents */
+  .corner-tick{position:absolute; font-family: var(--mono); font-size: 9px; color: var(--ink-4); letter-spacing:.08em; text-transform:uppercase}
+  .ct-tr{top:14px; right:16px}
+  .ct-bl{bottom:12px; left:16px}
+  .ct-br{bottom:12px; right:16px}
+
+  /* scroll */
+  .sched::-webkit-scrollbar{width:0}
+
+  @media (max-width: 1280px){
+    .grid{grid-template-columns: 220px 1fr 1fr 220px;}
+    .hero-l h1{font-size:38px}
+    .clock{font-size:48px}
+  }
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <div class="left">
+    <span>◎ Jerrod OS // v2.6</span>
+  </div>
+  <div class="right">
+    <span id="loc">Brooklyn, NY · 58°F</span>
+    <span>Bat 92%</span>
+    <span>Net · 148mb/s</span>
+    <span id="ymd">20260418·0918</span>
+    <span class="pill-close"><i></i><i></i><i class="x"></i></span>
+  </div>
+</div>
+
+<!-- Grid -->
+<div class="grid">
+
+  <!-- SPEAKER -->
+  <section class="card speaker">
+    <div class="card-head">
+      <span class="mono"><em>01 //</em>SPEAKER</span>
+      <span class="mono" style="color:var(--ok)">● ONLINE</span>
+    </div>
+    <div class="body">
+      <div class="avatar"></div>
+      <div>
+        <div class="name">Jerrod <em>Chen</em></div>
+        <div class="mono" style="margin-top:4px;color:var(--ink-3)">Designer · Brooklyn</div>
+      </div>
+    </div>
+    <div class="meta-row">
+      <div>
+        <div class="k">Focus</div>
+        <div class="v">Deep Work</div>
+      </div>
+      <div>
+        <div class="k">Status</div>
+        <div class="v">DND</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SESSION -->
+  <section class="card session">
+    <div class="card-head">
+      <span class="mono"><em>02 //</em>SESSION</span>
+      <span class="mono">UTC −04:00 · EDT</span>
+    </div>
+    <div class="hero">
+      <div class="hero-l">
+        <h1>Good <em>afternoon,</em> Jerrod.</h1>
+        <div class="sub">Saturday · April 18, 2026 · Day 108 of 365</div>
+      </div>
+      <div class="hero-r">
+        <div class="clock"><span id="hh">09</span><span class="sep">:</span><span id="mm">16</span><span class="s" id="ss">09</span></div>
+        <div class="sub">Local Time</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VITALS -->
+  <section class="card vitals">
+    <div class="card-head">
+      <span class="mono"><em>03 //</em>VITALS</span>
+      <span class="mono">LIVE</span>
+    </div>
+    <div class="steps">
+      <b>7,842</b>
+      <span class="u">Steps</span>
+      <span class="delta" style="margin-left:auto">↑ 18% AVG</span>
+    </div>
+    <div class="goal"><span>Today · Goal 10,000</span><span>5.6km · 312kcal</span></div>
+    <div class="spark">
+      <svg viewBox="0 0 240 64" preserveAspectRatio="none" width="100%" height="100%">
+        <defs>
+          <linearGradient id="sg" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="oklch(0.66 0.155 45)" stop-opacity=".35"/>
+            <stop offset="100%" stop-color="oklch(0.66 0.155 45)" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <path d="M0,55 L10,52 20,54 30,50 40,48 50,46 60,44 70,45 80,40 90,38 100,36 110,30 120,32 130,26 140,22 150,24 160,18 170,14 180,16 190,12 200,10 210,11 220,9 230,8 240,10 L240,64 L0,64 Z" fill="url(#sg)"/>
+        <path d="M0,55 L10,52 20,54 30,50 40,48 50,46 60,44 70,45 80,40 90,38 100,36 110,30 120,32 130,26 140,22 150,24 160,18 170,14 180,16 190,12 200,10 210,11 220,9 230,8 240,10" fill="none" stroke="oklch(0.66 0.155 45)" stroke-width="1.5"/>
+      </svg>
+    </div>
+    <hr/>
+    <div class="bios">
+      <div class="bio"><div class="l">Heart</div><div class="v">72<small>bpm</small></div></div>
+      <div class="bio"><div class="l">Sleep</div><div class="v">7.4<small>hrs</small></div></div>
+      <div class="bio"><div class="l">HRV</div><div class="v">54<small>ms</small></div></div>
+      <div class="bio"><div class="l">Water</div><div class="v">1.8<small>L</small></div></div>
+    </div>
+    <div class="rings">
+      <div class="ring">
+        <svg width="56" height="56" viewBox="0 0 36 36">
+          <circle cx="18" cy="18" r="14" fill="none" stroke="oklch(0.88 0.03 50)" stroke-width="3"/>
+          <circle cx="18" cy="18" r="14" fill="none" stroke="oklch(0.62 0.17 35)" stroke-width="3" stroke-dasharray="88 100" stroke-linecap="round" transform="rotate(-90 18 18)"/>
+        </svg>
+        <div class="n">480/650</div>
+        <div class="l">Move</div>
+      </div>
+      <div class="ring">
+        <svg width="56" height="56" viewBox="0 0 36 36">
+          <circle cx="18" cy="18" r="14" fill="none" stroke="oklch(0.88 0.03 140)" stroke-width="3"/>
+          <circle cx="18" cy="18" r="14" fill="none" stroke="oklch(0.58 0.14 150)" stroke-width="3" stroke-dasharray="84 100" stroke-linecap="round" transform="rotate(-90 18 18)"/>
+        </svg>
+        <div class="n">42/50</div>
+        <div class="l">Exercise</div>
+      </div>
+      <div class="ring">
+        <svg width="56" height="56" viewBox="0 0 36 36">
+          <circle cx="18" cy="18" r="14" fill="none" stroke="oklch(0.88 0.03 240)" stroke-width="3"/>
+          <circle cx="18" cy="18" r="14" fill="none" stroke="oklch(0.58 0.12 235)" stroke-width="3" stroke-dasharray="75 100" stroke-linecap="round" transform="rotate(-90 18 18)"/>
+        </svg>
+        <div class="n">9/12</div>
+        <div class="l">Stand</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LEFT STACK: Reading / Habits / Thought -->
+  <div class="stack">
+    <section class="card reading">
+      <div class="card-head">
+        <span class="mono"><em>04 //</em>READING</span>
+        <span class="mono">64% · pg 214</span>
+      </div>
+      <div class="body">
+        <div class="book">
+          <div class="bt">A Pattern<br>Language</div>
+          <div class="ba">Alexander</div>
+        </div>
+        <div class="info">
+          <div class="btitle">A Pattern <em>Language</em></div>
+          <div class="bauthor">Christopher Alexander</div>
+          <div class="pg"><span>pg 214 / 334</span><span>~3.2 hrs left</span></div>
+          <div class="pbar"><i></i></div>
+        </div>
+      </div>
+      <div class="next">
+        <span class="lbl">Up next</span>
+        <span class="tl">The Craftsman · Sennett</span>
+      </div>
+    </section>
+
+    <section class="card habits">
+      <div class="card-head">
+        <span class="mono"><em>05 //</em>HABITS · 14D</span>
+        <span class="mono">3 of 4 today</span>
+      </div>
+      <div class="row">
+        <span class="hlbl">Write</span>
+        <div class="dots" data-habit="write"></div>
+        <span class="streak">12<small>d</small></span>
+      </div>
+      <div class="row">
+        <span class="hlbl">Meditate</span>
+        <div class="dots" data-habit="med"></div>
+        <span class="streak">8<small>d</small></span>
+      </div>
+      <div class="row">
+        <span class="hlbl">Run</span>
+        <div class="dots" data-habit="run"></div>
+        <span class="streak">4<small>d</small></span>
+      </div>
+      <div class="row">
+        <span class="hlbl">No phone AM</span>
+        <div class="dots" data-habit="np"></div>
+        <span class="streak">21<small>d</small></span>
+      </div>
+      <div class="foot"><span>Mon 04/06</span><span>Today</span></div>
+    </section>
+
+    <section class="card thought">
+      <div class="card-head">
+        <span class="mono"><em>06 //</em>THOUGHT</span>
+        <span class="mono">Daily</span>
+      </div>
+      <blockquote>The details are not the details — they make the design.</blockquote>
+      <div class="attr"><b>— Charles Eames</b><span>04·18·26</span></div>
+    </section>
+  </div>
+
+  <!-- CALENDAR -->
+  <section class="card calendar">
+    <div class="card-head">
+      <span class="mono"><em>07 //</em>CALENDAR</span>
+      <span class="mono">Apr 2026</span>
+    </div>
+    <h2>Saturday, <em>April 18</em></h2>
+    <div class="days" id="days"></div>
+    <div class="sched">
+      <div class="ev now">
+        <div class="t"><b>NOW</b>2:30</div>
+        <div>
+          <div class="title">Studio deep work</div>
+          <div class="desc">Design review prep · Focus session</div>
+        </div>
+        <div class="marker"></div>
+      </div>
+      <div class="ev">
+        <div class="t"><b>4:00</b>PM</div>
+        <div>
+          <div class="title">Sync · Maya &amp; Theo</div>
+          <div class="desc">Jerrod OS v2.7 roadmap</div>
+        </div>
+        <div class="marker"></div>
+      </div>
+      <div class="ev">
+        <div class="t"><b>6:30</b>PM</div>
+        <div>
+          <div class="title">Run · Prospect Park loop</div>
+          <div class="desc">5km · easy pace</div>
+        </div>
+        <div class="marker"></div>
+      </div>
+      <div class="ev">
+        <div class="t"><b>8:00</b>PM</div>
+        <div>
+          <div class="title">Dinner w/ Eliza</div>
+          <div class="desc">Rule of Thirds · Williamsburg</div>
+        </div>
+        <div class="marker"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INBOX -->
+  <section class="card inbox">
+    <div class="card-head">
+      <span class="mono"><em>08 //</em>INBOX · CRITICAL</span>
+      <span class="mono">4 unread</span>
+    </div>
+    <div class="list">
+      <div class="row">
+        <div class="ava a">ML</div>
+        <div>
+          <div class="name">Maya Lin <span class="tag">Urgent</span></div>
+          <div class="prev">Re: v2.7 assets — need your sign-off today</div>
+        </div>
+        <div class="time">12m</div>
+      </div>
+      <div class="row">
+        <div class="ava b">TH</div>
+        <div>
+          <div class="name">Theo Harris</div>
+          <div class="prev">Moved our sync · new calendar invite attached</div>
+        </div>
+        <div class="time">48m</div>
+      </div>
+      <div class="row">
+        <div class="ava c">EN</div>
+        <div>
+          <div class="name">Eliza N.</div>
+          <div class="prev">8pm still on? Booked us a corner table ♥</div>
+        </div>
+        <div class="time">2h</div>
+      </div>
+      <div class="row">
+        <div class="ava d">AC</div>
+        <div>
+          <div class="name">Arc Collective</div>
+          <div class="prev">Residency application accepted · welcome packet</div>
+        </div>
+        <div class="time">5h</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- NOW PLAYING -->
+  <section class="card playing">
+    <div class="card-head">
+      <span class="mono"><em>09 //</em>NOW PLAYING</span>
+      <span class="mono">Vinyl · Side A</span>
+    </div>
+    <div class="np">
+      <div class="cover"></div>
+      <div class="np-meta">
+        <div class="title">Harvest <em style="font-style:italic">Moon</em></div>
+        <div class="sub">Still Fours · Harvest Moon '92</div>
+      </div>
+    </div>
+    <div class="wave" id="wave"></div>
+    <div class="np-ctrl">
+      <span id="npTime">1:42</span>
+      <div class="ctrls">
+        <button title="prev">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zM9.5 12l10 6V6z"/></svg>
+        </button>
+        <button class="play" id="npPlay" title="play">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" id="npIcon"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+        <button title="next">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM4.5 18l10-6-10-6z"/></svg>
+        </button>
+      </div>
+      <span>5:32</span>
+    </div>
+  </section>
+
+  <!-- PROJECT -->
+  <section class="card project">
+    <div class="card-head">
+      <span class="mono"><em>10 //</em>ACTIVE PROJECT</span>
+      <span class="mono">Due Fri</span>
+    </div>
+    <h3>Jerrod OS · <em>v2.7</em></h3>
+    <div class="bc">Refresh · Widgets · Motion</div>
+    <div class="progress">
+      <div class="lab"><span>Progress</span><span id="pct">68%</span></div>
+      <div class="bar"><i id="bar" style="width:68%"></i></div>
+    </div>
+    <div class="tasks" id="tasks">
+      <div class="task done" data-t="1">
+        <div class="box"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M5 12l5 5 9-11"/></svg></div>
+        <div class="label">Wireframes · glass grid</div>
+      </div>
+      <div class="task done" data-t="2">
+        <div class="box"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M5 12l5 5 9-11"/></svg></div>
+        <div class="label">Set type · Fraunces</div>
+      </div>
+      <div class="task" data-t="3">
+        <div class="box"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M5 12l5 5 9-11"/></svg></div>
+        <div class="label">Motion choreography</div>
+      </div>
+      <div class="task" data-t="4">
+        <div class="box"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M5 12l5 5 9-11"/></svg></div>
+        <div class="label">Prepare hand-off deck</div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  // ===== Calendar strip =====
+  (function(){
+    const wrap = document.getElementById('days');
+    const labels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const nums = [13,14,15,16,17,18,19];
+    labels.forEach((w,i)=>{
+      const d = document.createElement('div');
+      d.className = 'day' + (i===5 ? ' active' : '');
+      d.innerHTML = '<div class="wd">'+w+'</div><div class="dn">'+nums[i]+'</div>';
+      d.addEventListener('click', ()=>{
+        wrap.querySelectorAll('.day').forEach(x=>x.classList.remove('active'));
+        d.classList.add('active');
+      });
+      wrap.appendChild(d);
+    });
+  })();
+
+  // ===== Clock =====
+  (function(){
+    const hh = document.getElementById('hh');
+    const mm = document.getElementById('mm');
+    const ss = document.getElementById('ss');
+    function tick(){
+      const d = new Date();
+      hh.textContent = String(d.getHours()).padStart(2,'0');
+      mm.textContent = String(d.getMinutes()).padStart(2,'0');
+      ss.textContent = String(d.getSeconds()).padStart(2,'0');
+    }
+    tick(); setInterval(tick, 1000);
+  })();
+
+  // ===== Waveform =====
+  (function(){
+    const w = document.getElementById('wave');
+    const N = 96;
+    // deterministic-ish heights
+    const heights = [];
+    let seed = 7;
+    function rnd(){ seed = (seed*9301+49297) % 233280; return seed/233280; }
+    for(let i=0;i<N;i++){
+      // envelope + variation
+      const env = 0.3 + 0.7 * Math.sin((i/N)*Math.PI);
+      heights.push( 10 + env * (20 + rnd()*22) );
+    }
+    heights.forEach((h,i)=>{
+      const b = document.createElement('i');
+      b.style.height = h + 'px';
+      if(i > 30) b.classList.add('future');
+      else b.classList.add('played');
+      w.appendChild(b);
+    });
+  })();
+
+  // ===== Play toggle =====
+  (function(){
+    const btn = document.getElementById('npPlay');
+    const icon = document.getElementById('npIcon');
+    let playing = true;
+    btn.addEventListener('click', ()=>{
+      playing = !playing;
+      icon.innerHTML = playing
+        ? '<path d="M8 5v14l11-7z"/>'
+        : '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
+    });
+  })();
+
+  // ===== Habit dots =====
+  (function(){
+    // 14 days; levels: 0 miss, 1 light, 2 med, 3 full, -1 empty(future)
+    const data = {
+      write: [3,2,3,3,0,3,2,3,3,3,2,3,3,3],
+      med:   [3,3,0,3,3,2,3,3,0,3,3,3,3,2],
+      run:   [2,0,3,0,3,3,0,0,3,0,3,3,3,2],
+      np:    [3,3,3,3,3,3,3,3,3,3,3,3,3,3],
+    };
+    const cls = ['miss','l1','l2','l3'];
+    document.querySelectorAll('.dots[data-habit]').forEach(el=>{
+      const arr = data[el.dataset.habit] || [];
+      arr.forEach(v=>{
+        const i = document.createElement('i');
+        if(v>=0) i.className = cls[v];
+        el.appendChild(i);
+      });
+    });
+  })();
+
+  // ===== Tasks =====
+  (function(){
+    const tasks = document.querySelectorAll('#tasks .task');
+    const bar = document.getElementById('bar');
+    const pct = document.getElementById('pct');
+    function update(){
+      const done = [...tasks].filter(t=>t.classList.contains('done')).length;
+      const p = Math.round((done/tasks.length)*100);
+      bar.style.width = p + '%';
+      pct.textContent = p + '%';
+    }
+    tasks.forEach(t=>{
+      t.addEventListener('click', ()=>{ t.classList.toggle('done'); update(); });
+    });
+  })();
+</script>
+</body>
+</html>
