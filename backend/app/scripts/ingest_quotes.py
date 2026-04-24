@@ -106,8 +106,9 @@ def clean_text(text: str) -> str:
 
 
 def accept(text: str) -> bool:
-    # Cap at 280 chars so the Thought card can render at full size without clipping.
-    if not (40 <= len(text) <= 280):
+    # Thought card now occupies the bottom 2/3 of the left stack; room for
+    # longer quotes. Still cap at 500 to avoid anything novel-length.
+    if not (40 <= len(text) <= 500):
         return False
     if any(sub in text for sub in BAD_SUBSTRINGS):
         return False

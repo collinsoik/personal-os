@@ -118,17 +118,6 @@ function formatTopDate(d) {
   return `${pad(d.getMonth()+1)}·${pad(d.getDate())}·${String(d.getFullYear()).slice(2)}`;
 }
 
-function renderReading(r) {
-  if (!r) return;
-  setText('.card.reading .btitle', r.title);
-  setText('.card.reading .bauthor', r.author);
-  setText('.card.reading .pg span:first-child', `pg ${r.page} / ${r.total_pages}`);
-  const pbar = $('.card.reading .pbar i');
-  if (pbar) pbar.style.width = `${r.progress}%`;
-  setText('.card.reading .card-head .mono:last-child', `${r.progress}% · pg ${r.page}`);
-  if (r.up_next) setText('.card.reading .next .tl', r.up_next);
-}
-
 function renderHabits(habits) {
   if (!habits?.length) return;
   const todayStr = new Date().toISOString().slice(0, 10);
@@ -335,9 +324,9 @@ function renderDailyQuote() {
   const bq = $('.card.thought blockquote');
   if (bq) {
     bq.textContent = q.text;
-    // Shrink font to keep long quotes inside the card without clipping.
+    // Card is now the tall half of the left stack — scale gently based on length.
     const len = q.text.length;
-    const size = len <= 120 ? 17 : len <= 180 ? 15 : len <= 240 ? 14 : 13;
+    const size = len <= 180 ? 19 : len <= 300 ? 17 : len <= 420 ? 15 : 14;
     bq.style.fontSize = `${size}px`;
   }
   setText('.card.thought .attr b', q.author ? `— ${q.author}` : '');
@@ -369,7 +358,6 @@ async function refresh() {
     const data = await res.json();
     renderVitals(data.vitals);
     renderThought(data.thought);
-    renderReading(data.reading);
     renderHabits(data.habits);
     renderCalendar(data.calendar);
     renderInbox(data.email);
