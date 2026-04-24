@@ -270,6 +270,32 @@ function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 }
 
+/* ── daily quote (local, static) ──────────────────────── */
+
+let LOCAL_QUOTES = [];
+
+async function loadQuotes() {
+  try {
+    const res = await fetch('/quotes.json', { cache: 'force-cache' });
+    if (!res.ok) return;
+    LOCAL_QUOTES = await res.json();
+    renderDailyQuote();
+  } catch (err) {
+    console.warn('quotes load failed:', err);
+  }
+}
+
+function renderDailyQuote() {
+  if (!LOCAL_QUOTES.length) return;
+  // Deterministic by absolute day — a given date always maps to the same quote.
+  const now = new Date();
+  const daysSinceEpoch = Math.floor(now.getTime() / 86_400_000);
+  const q = LOCAL_QUOTES[daysSinceEpoch % LOCAL_QUOTES.length];
+  setText('.card.thought blockquote', q.text);
+  setText('.card.thought .attr b', q.author ? `— ${q.author}` : '');
+  setText('.card.thought .attr span', q.source || formatTopDate(now));
+}
+
 /* ── fetch loop ───────────────────────────────────────── */
 
 async function refresh() {
@@ -291,5 +317,6 @@ async function refresh() {
 }
 
 renderStaticBoot();
+loadQuotes();
 refresh();
 setInterval(refresh, POLL_MS);
