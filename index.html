@@ -138,41 +138,9 @@
   .ring .n{font-family: var(--mono); font-size: 10.5px; letter-spacing:.04em; font-weight:500}
   .ring .l{font-family: var(--mono); font-size: 9.5px; letter-spacing:.14em; color:var(--ink-3); text-transform:uppercase}
 
-  /* Left column stack: Reading / Habits / Thought */
-  .stack{grid-column:1/2; grid-row:2/4; display:grid; grid-template-rows: 1fr 1fr 1fr; gap: 12px;}
+  /* Left column stack: Habits / Thought (expanded) */
+  .stack{grid-column:1/2; grid-row:2/4; display:grid; grid-template-rows: 1fr 2fr; gap: 12px;}
   .stack .card{padding: 12px 14px}
-
-  /* Reading */
-  .reading{display:flex; flex-direction:column}
-  .reading .body{display:flex; gap: 12px; align-items:flex-start; margin-top: 6px; flex:1}
-  .book{
-    width: 58px; height: 82px; flex-shrink:0; border-radius: 3px;
-    background:
-      linear-gradient(110deg, oklch(0.42 0.08 30) 0%, oklch(0.34 0.06 25) 100%);
-    box-shadow:
-      inset 2px 0 0 oklch(0 0 0 / .28),
-      inset -1px 0 0 oklch(1 0 0 / .06),
-      2px 3px 6px oklch(0 0 0 / .12);
-    position:relative; overflow:hidden;
-    padding: 10px 8px;
-    display:flex; flex-direction:column; justify-content:space-between;
-  }
-  .book::after{content:""; position:absolute; left:4px; top:0; bottom:0; width:1px; background: oklch(0 0 0 / .35)}
-  .book .bt{font-family: var(--serif); font-style: italic; font-size: 9px; color: oklch(0.92 0.04 70); line-height:1.1; letter-spacing:.02em}
-  .book .ba{font-family: var(--mono); font-size: 6.5px; color: oklch(0.85 0.03 70); letter-spacing:.14em; text-transform:uppercase}
-  .reading .info{flex:1; min-width:0}
-  .reading .btitle{font-family: var(--serif); font-weight:500; font-size: 17px; line-height:1.1; letter-spacing:-.005em}
-  .reading .btitle em{font-style:italic; font-weight:400}
-  .reading .bauthor{font-family: var(--mono); font-size: 10px; color: var(--ink-3); letter-spacing:.08em; text-transform:uppercase; margin-top: 3px}
-  .reading .pg{font-family: var(--mono); font-size: 10px; color: var(--ink-3); letter-spacing:.08em; text-transform:uppercase; margin-top: 10px; display:flex; justify-content:space-between}
-  .reading .pbar{height:3px; background: var(--line-2); border-radius: 3px; margin-top: 5px; overflow:hidden}
-  .reading .pbar i{display:block; height:100%; width:64%; background: var(--accent)}
-  .reading .next{
-    margin-top: 10px; padding-top: 9px; border-top: 1px dashed var(--line-2);
-    display:flex; justify-content:space-between; align-items:baseline; gap:8px;
-  }
-  .reading .next .lbl{font-family: var(--mono); font-size: 9.5px; letter-spacing:.12em; text-transform:uppercase; color: var(--ink-3); flex-shrink:0}
-  .reading .next .tl{font-family: var(--serif); font-style:italic; font-size: 13px; color: var(--ink); text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 
   /* Habits */
   .habits{display:flex; flex-direction:column}
@@ -197,10 +165,10 @@
   .thought blockquote{
     margin: 4px 0 0; flex:1;
     font-family: var(--serif); font-weight:400; font-style: italic;
-    font-size: 17px; line-height: 1.28; letter-spacing: -.005em;
+    font-size: 19px; line-height: 1.35; letter-spacing: -.005em;
     color: var(--ink);
     display:flex; align-items:center;
-    position:relative; padding-left: 14px;
+    position:relative; padding-left: 16px;
   }
   .thought blockquote::before{
     content:""; position:absolute; left:0; top: 6px; bottom: 6px; width: 2px; background: var(--accent);
