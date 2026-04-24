@@ -1,0 +1,13 @@
+services:
+  api:
+    build: .
+    container_name: personal-os-api
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3010:3010"
+    volumes:
+      - ./data:/data
+    env_file:
+      - .env
+    environment:
+      - PERSONAL_OS_DB=/data/personal-os.db
