@@ -6,6 +6,8 @@ const API = 'https://personal-os-api.collinsoik.dev';
 const POLL_MS = 30_000;
 const MUSIC_TICK_MS = 500;
 
+let selectedDayIndex = null;  // which day of the week strip is active (0=Mon .. 6=Sun)
+
 const USER = {
   fullNameHtml: 'Collin <em>Soik</em>',
   subtitle: 'Student · Raleigh',
@@ -158,12 +160,18 @@ function renderHabits(habits) {
   if (headRight) headRight.textContent = `${hits} of ${habits.length} today`;
 }
 
-function renderCalendar(cal) {
-  if (!cal?.events?.length) return;
+function renderSched(events) {
   const sched = $('.card.calendar .sched');
   if (!sched) return;
   sched.innerHTML = '';
-  cal.events.forEach(ev => {
+  if (!events?.length) {
+    const row = document.createElement('div');
+    row.className = 'ev empty';
+    row.innerHTML = `<div class="t"></div><div><div class="title">No events</div></div><div class="marker"></div>`;
+    sched.appendChild(row);
+    return;
+  }
+  events.forEach(ev => {
     const row = document.createElement('div');
     row.className = 'ev' + (ev.now ? ' now' : '');
     row.innerHTML = `
@@ -175,6 +183,46 @@ function renderCalendar(cal) {
       <div class="marker"></div>`;
     sched.appendChild(row);
   });
+}
+
+function updateCalendarHeader(dateISO) {
+  const d = new Date(dateISO + 'T00:00:00');
+  const longDay = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d.getDay()];
+  setHTML('.calendar h2', `${longDay}, <em>${MONTHS[d.getMonth()]} ${d.getDate()}</em>`);
+}
+
+function renderCalendar(cal) {
+  if (!cal?.days?.length) return;
+  const daysEl = $('#days');
+  if (!daysEl) return;
+
+  if (selectedDayIndex == null) {
+    const todayIdx = cal.days.findIndex(d => d.is_today);
+    selectedDayIndex = todayIdx >= 0 ? todayIdx : 0;
+  }
+
+  daysEl.innerHTML = '';
+  cal.days.forEach((day, i) => {
+    const dNum = parseInt((day.date || '').split('-')[2], 10) || '';
+    const el = document.createElement('div');
+    el.className = 'day' + (i === selectedDayIndex ? ' active' : '');
+    const dot = day.events?.length ? '<span class="cnt"></span>' : '';
+    el.innerHTML = `<div class="wd">${day.label}</div><div class="dn">${dNum}</div>${dot}`;
+    el.addEventListener('click', () => {
+      selectedDayIndex = i;
+      daysEl.querySelectorAll('.day').forEach(x => x.classList.remove('active'));
+      el.classList.add('active');
+      renderSched(day.events);
+      updateCalendarHeader(day.date);
+    });
+    daysEl.appendChild(el);
+  });
+
+  const selected = cal.days[selectedDayIndex];
+  if (selected) {
+    renderSched(selected.events);
+    updateCalendarHeader(selected.date);
+  }
 }
 
 function renderInbox(email) {

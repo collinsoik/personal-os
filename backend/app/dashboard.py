@@ -26,7 +26,6 @@ def build_dashboard(db: Session) -> dict[str, Any]:
     calendar = _cached(db, "calendar") or {
         "today_label": now.strftime("%A, %B %-d"),
         "days": [],
-        "events": [],
     }
     music = _cached(db, "spotify") or {
         "playing": False,

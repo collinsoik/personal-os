@@ -228,8 +228,12 @@ async def fetch_calendar_snapshot(db: Session) -> dict | None:
 
         results = await asyncio.gather(*(fetch_cal(c) for c in calendars))
 
-    events_today: list[dict[str, Any]] = []
-    per_day_counts: dict[str, int] = {}
+    # One bucket per weekday (Mon..Sun). Each bucket collects events that start on that day.
+    buckets: list[list[dict[str, Any]]] = [[] for _ in range(7)]
+
+    def bucket_index(d) -> int | None:
+        delta = (d - week_start_local.date()).days
+        return delta if 0 <= delta < 7 else None
 
     for cal, items in results:
         cal_name = cal.get("summaryOverride") or cal.get("summary") or ""
@@ -244,23 +248,20 @@ async def fetch_calendar_snapshot(db: Session) -> dict | None:
                     end_date = datetime.fromisoformat(end["date"]).date()
                 except (KeyError, ValueError):
                     continue
-                # All-day spans [start_date, end_date).
+                # All-day event spans [start_date, end_date); add one entry per covered day in the week.
                 cur = start_date
                 while cur < end_date:
-                    if week_start_local.date() <= cur < week_end_local.date():
-                        key = cur.isoformat()
-                        per_day_counts[key] = per_day_counts.get(key, 0) + 1
+                    idx = bucket_index(cur)
+                    if idx is not None:
+                        buckets[idx].append({
+                            "time_head": "All",
+                            "time_tail": " day",
+                            "title": ev.get("summary") or "(untitled)",
+                            "desc": cal_name,
+                            "now": False,
+                            "_sort": datetime.combine(cur, datetime.min.time(), tz),
+                        })
                     cur += timedelta(days=1)
-
-                if start_date <= today < end_date:
-                    events_today.append({
-                        "time_head": "All",
-                        "time_tail": " day",
-                        "title": ev.get("summary") or "(untitled)",
-                        "desc": cal_name,
-                        "now": False,
-                        "_sort": today_start_local,
-                    })
             else:
                 try:
                     start_dt = _parse_event_dt(start["dateTime"], tz)
@@ -268,45 +269,42 @@ async def fetch_calendar_snapshot(db: Session) -> dict | None:
                 except (KeyError, ValueError):
                     continue
 
-                day_key = start_dt.date().isoformat()
-                if week_start_local.date() <= start_dt.date() < week_end_local.date():
-                    per_day_counts[day_key] = per_day_counts.get(day_key, 0) + 1
+                idx = bucket_index(start_dt.date())
+                if idx is None:
+                    continue
 
-                if start_dt < today_end_local and end_dt > today_start_local:
-                    head, tail = _fmt_time(start_dt)
-                    is_now = start_dt <= now_local < end_dt
-                    desc_bits = []
-                    if cal_name:
-                        desc_bits.append(cal_name)
-                    loc = ev.get("location")
-                    if loc:
-                        desc_bits.append(loc)
-                    events_today.append({
-                        "time_head": head,
-                        "time_tail": tail,
-                        "title": ev.get("summary") or "(untitled)",
-                        "desc": " · ".join(desc_bits),
-                        "now": is_now,
-                        "_sort": start_dt,
-                    })
-
-    events_today.sort(key=lambda e: e["_sort"])
-    for e in events_today:
-        e.pop("_sort", None)
+                head, tail = _fmt_time(start_dt)
+                is_now = start_dt <= now_local < end_dt
+                desc_bits = []
+                if cal_name:
+                    desc_bits.append(cal_name)
+                loc = ev.get("location")
+                if loc:
+                    desc_bits.append(loc)
+                buckets[idx].append({
+                    "time_head": head,
+                    "time_tail": tail,
+                    "title": ev.get("summary") or "(untitled)",
+                    "desc": " · ".join(desc_bits),
+                    "now": is_now,
+                    "_sort": start_dt,
+                })
 
     day_labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     days = []
     for i in range(7):
         d = (week_start_local + timedelta(days=i)).date()
+        bucket = sorted(buckets[i], key=lambda e: e["_sort"])
+        for e in bucket:
+            e.pop("_sort", None)
         days.append({
             "label": day_labels[i],
             "date": d.isoformat(),
-            "count": per_day_counts.get(d.isoformat(), 0),
             "is_today": d == today,
+            "events": bucket,
         })
 
     return {
         "today_label": now_local.strftime("%A, %B ") + str(now_local.day),
         "days": days,
-        "events": events_today,
     }

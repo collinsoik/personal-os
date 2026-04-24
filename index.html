@@ -186,6 +186,7 @@
   .calendar h2 em{font-style:italic; font-weight:400}
   .days{display:grid; grid-template-columns: repeat(7,1fr); gap: 6px; margin-bottom: 14px}
   .day{
+    position: relative;
     border:1px solid var(--line-2); border-radius: 8px; padding: 8px 0 9px; text-align:center;
     background: oklch(0.97 0.010 82);
     cursor:pointer; transition: background .15s, transform .15s;
@@ -193,8 +194,11 @@
   .day:hover{background: oklch(0.95 0.013 82)}
   .day .wd{font-family: var(--mono); font-size: 9.5px; color: var(--ink-3); letter-spacing:.1em; text-transform:uppercase}
   .day .dn{font-family: var(--serif); font-weight:500; font-size: 18px; margin-top:2px}
+  .day .cnt{position:absolute; bottom:3px; left:50%; transform:translateX(-50%); width:4px; height:4px; border-radius:50%; background: var(--ink-3)}
   .day.active{background: var(--dark); color: oklch(0.96 0.01 80); border-color: var(--dark)}
   .day.active .wd{color: oklch(0.75 0.02 80)}
+  .day.active .cnt{background: oklch(0.75 0.02 80)}
+  .ev.empty{opacity:.45}
   .sched{display:flex; flex-direction:column; gap: 14px; padding-right: 4px; overflow:auto}
   .ev{display:grid; grid-template-columns: 80px 1fr auto; gap: 14px; align-items:flex-start}
   .ev .t{font-family: var(--mono); font-size: 10.5px; letter-spacing:.08em; color: var(--ink-3); padding-top:3px; text-transform:uppercase}
