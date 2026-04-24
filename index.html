@@ -63,7 +63,7 @@
   .grid{
     display:grid;
     grid-template-columns: 240px 1fr 1fr 240px;
-    grid-template-rows: 136px 1fr 1fr;
+    grid-template-rows: 136px 1fr 240px;
     gap: 12px;
     height: calc(100vh - 60px);
     min-height: 820px;
@@ -648,18 +648,7 @@
     });
   })();
 
-  // ===== Play toggle =====
-  (function(){
-    const btn = document.getElementById('npPlay');
-    const icon = document.getElementById('npIcon');
-    let playing = true;
-    btn.addEventListener('click', ()=>{
-      playing = !playing;
-      icon.innerHTML = playing
-        ? '<path d="M8 5v14l11-7z"/>'
-        : '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
-    });
-  })();
+  // Music controls are wired in app.js (real Spotify API via /api/spotify/*)
 
   // ===== Habit dots =====
   (function(){

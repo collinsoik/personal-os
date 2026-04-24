@@ -3,8 +3,17 @@
 // Missing fields fall through: the existing static markup acts as placeholder.
 
 const API = 'https://personal-os-api.collinsoik.dev';
-const POLL_MS = 30_000;
+const FALLBACK_POLL_MS = 2 * 60 * 1000; // SSE is primary; this is just a safety net
 const MUSIC_TICK_MS = 500;
+
+(function unlockFromHash() {
+  const m = location.hash.match(/unlock=([A-Za-z0-9]+)/);
+  if (m) {
+    localStorage.setItem('po_secret', m[1]);
+    history.replaceState(null, '', location.pathname);
+  }
+})();
+const PO_SECRET = () => localStorage.getItem('po_secret');
 
 let selectedDayIndex = null;  // which day of the week strip is active (0=Mon .. 6=Sun)
 
@@ -289,10 +298,17 @@ function paintMusicStatic() {
   }
 }
 
+const PLAY_PATH  = '<path d="M8 5v14l11-7z"/>';
+const PAUSE_PATH = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
+
 function applyMusicTick() {
   const m = musicAnchor;
   if (!m) return;
   setText('.card.playing .card-head .mono:last-child', m.playing ? 'Playing' : 'Paused');
+  const icon = document.getElementById('npIcon');
+  if (icon) icon.innerHTML = m.playing ? PAUSE_PATH : PLAY_PATH;
+  const btn = document.getElementById('npPlay');
+  if (btn && !btn.disabled) btn.title = m.playing ? 'pause' : 'play';
   if (!m.duration_ms || m.progress_ms == null) return;
   let progress = m.progress_ms;
   if (m.playing) {
@@ -319,6 +335,75 @@ function applyMusicTick() {
 function msToMS(ms) {
   const s = Math.floor(ms / 1000);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+
+/* ── music controls ────────────────────────────────────── */
+
+let musicToastTimer = null;
+function showMusicToast(msg) {
+  const el = document.querySelector('.card.playing .card-head .mono:last-child');
+  if (!el) return;
+  el.textContent = String(msg || 'error').toUpperCase();
+  clearTimeout(musicToastTimer);
+  musicToastTimer = setTimeout(() => {
+    if (musicAnchor) el.textContent = musicAnchor.playing ? 'Playing' : 'Paused';
+  }, 3000);
+}
+
+async function spotifyControl(action) {
+  const secret = PO_SECRET();
+  if (!secret) return;
+  if ((action === 'play' || action === 'pause') && musicAnchor) {
+    musicAnchor.playing = (action === 'play');
+    musicAnchor.received_at = performance.now();
+    applyMusicTick();
+  }
+  try {
+    const res = await fetch(`${API}/api/spotify/${action}`, {
+      method: 'POST',
+      headers: { 'X-PO-Secret': secret },
+      cache: 'no-store',
+    });
+    if (!res.ok) {
+      let err = 'control failed';
+      try {
+        const j = await res.json();
+        err = (j && (j.detail?.error || j.error || j.detail)) || err;
+      } catch {}
+      showMusicToast(err);
+      return;
+    }
+    const data = await res.json();
+    if (data && data.music) renderMusic(data.music);
+  } catch {
+    showMusicToast('network error');
+  }
+}
+
+function wireMusicControls() {
+  const card = document.querySelector('.card.playing');
+  if (!card) return;
+  const buttons = card.querySelectorAll('.ctrls button');
+  if (buttons.length < 3) return;
+  const [prevBtn, playBtn, nextBtn] = buttons;
+  if (!PO_SECRET()) {
+    buttons.forEach(b => { b.disabled = true; b.title = 'Unlock controls to use'; });
+    return;
+  }
+  playBtn.addEventListener('click', () => {
+    spotifyControl(musicAnchor?.playing ? 'pause' : 'play');
+  });
+  prevBtn.addEventListener('click', () => spotifyControl('previous'));
+  nextBtn.addEventListener('click', () => spotifyControl('next'));
+}
+
+function connectEvents() {
+  const es = new EventSource(`${API}/api/events`);
+  es.addEventListener('music', (ev) => {
+    try { renderMusic(JSON.parse(ev.data)); } catch {}
+  });
+  // EventSource auto-reconnects on transient errors; no-op on `onerror`.
+  return es;
 }
 
 function renderProject(p) {
@@ -435,8 +520,10 @@ async function refresh() {
 
 renderStaticBoot();
 loadQuotes();
+wireMusicControls();
 pingPresence().then(refresh);
-setInterval(refresh, POLL_MS);
+connectEvents();
+setInterval(refresh, FALLBACK_POLL_MS); // 2-min safety net for stalled SSE
 setInterval(pingPresence, 30_000);
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {

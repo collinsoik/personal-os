@@ -1,14 +1,17 @@
 from contextlib import asynccontextmanager
 from datetime import datetime
 
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from . import models, poller
 from .config import settings
+from .control import router as control_router
 from .dashboard import build_dashboard
 from .db import get_session, init_db
+from .deps import require_secret
+from .events import router as events_router
 from .oauth import router as oauth_router
 
 
@@ -32,11 +35,8 @@ app.add_middleware(
 )
 
 app.include_router(oauth_router, prefix="/api")
-
-
-def require_secret(x_po_secret: str | None = Header(default=None)):
-    if x_po_secret != settings().write_secret:
-        raise HTTPException(status_code=401, detail="bad secret")
+app.include_router(control_router, prefix="/api")
+app.include_router(events_router, prefix="/api")
 
 
 @app.get("/api/health")

@@ -36,7 +36,14 @@ SCOPES = [
     "user-read-currently-playing",
     "user-read-recently-played",
     "user-top-read",
+    "user-modify-playback-state",
 ]
+
+
+class ControlError(Exception):
+    def __init__(self, msg: str, status: int = 500):
+        super().__init__(msg)
+        self.status = status
 
 # In-memory CSRF states. Single-process uvicorn; restart mid-flow just means retry.
 _pending_states: dict[str, float] = {}
@@ -246,3 +253,38 @@ async def fetch_music_snapshot(db: Session) -> dict | None:
         payload["hours_this_week"] = _hours_this_week(recent["items"])
 
     return payload
+
+
+async def _control(db: Session, method: str, path: str) -> None:
+    token = await get_valid_access_token(db)
+    if not token:
+        raise ControlError("no spotify token", status=401)
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        r = await client.request(
+            method,
+            f"{API_BASE}{path}",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+    if r.status_code == 404:
+        raise ControlError("no active device", status=409)
+    if r.status_code == 403:
+        raise ControlError("premium required", status=403)
+    if r.status_code == 401:
+        raise ControlError("spotify auth expired", status=401)
+    r.raise_for_status()
+
+
+async def play(db: Session) -> None:
+    await _control(db, "PUT", "/me/player/play")
+
+
+async def pause(db: Session) -> None:
+    await _control(db, "PUT", "/me/player/pause")
+
+
+async def next_track(db: Session) -> None:
+    await _control(db, "POST", "/me/player/next")
+
+
+async def previous_track(db: Session) -> None:
+    await _control(db, "POST", "/me/player/previous")
