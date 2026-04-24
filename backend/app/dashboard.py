@@ -7,12 +7,14 @@ fall back to placeholder/empty structures so the frontend can render.
 """
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 from sqlalchemy.orm import Session
 
 from . import models
+
+PRESENCE_WINDOW = timedelta(seconds=120)
 
 
 def _cached(db: Session, key: str) -> dict[str, Any] | None:
@@ -104,6 +106,13 @@ def build_dashboard(db: Session) -> dict[str, Any]:
             "up_next": reading_row.up_next,
         }
 
+    presence_row = db.get(models.CachedPayload, "presence")
+    last_seen = presence_row.updated_at if presence_row else None
+    presence = {
+        "online": bool(last_seen and (datetime.utcnow() - last_seen) < PRESENCE_WINDOW),
+        "last_seen": last_seen.isoformat() + "Z" if last_seen else None,
+    }
+
     return {
         "now": now.isoformat(),
         "calendar": calendar,
@@ -114,4 +123,5 @@ def build_dashboard(db: Session) -> dict[str, Any]:
         "habits": habits,
         "project": project_payload,
         "reading": reading,
+        "presence": presence,
     }

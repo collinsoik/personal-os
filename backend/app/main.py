@@ -5,7 +5,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
-from . import poller
+from . import models, poller
 from .config import settings
 from .dashboard import build_dashboard
 from .db import get_session, init_db
@@ -47,6 +47,19 @@ def health():
 @app.get("/api/dashboard")
 def dashboard(db: Session = Depends(get_session)):
     return build_dashboard(db)
+
+
+@app.post("/api/presence/ping")
+def presence_ping(db: Session = Depends(get_session)):
+    now = datetime.utcnow()
+    row = db.get(models.CachedPayload, "presence")
+    if row:
+        row.payload = {"last_seen": now.isoformat() + "Z"}
+        row.updated_at = now
+    else:
+        db.add(models.CachedPayload(key="presence", payload={"last_seen": now.isoformat() + "Z"}, updated_at=now))
+    db.commit()
+    return {"ok": True}
 
 
 # Placeholder write route so we can smoke-test the shared-secret guard.

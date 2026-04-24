@@ -396,6 +396,22 @@ async function renderWeather() {
   }
 }
 
+async function pingPresence() {
+  try {
+    await fetch(`${API}/api/presence/ping`, { method: 'POST', cache: 'no-store' });
+  } catch (err) {
+    console.warn('presence ping failed:', err);
+  }
+}
+
+function renderPresence(p) {
+  const el = document.querySelector('.card.speaker .card-head .mono:last-child');
+  if (!el) return;
+  const online = !!p?.online;
+  el.textContent = online ? '● ONLINE' : '● OFFLINE';
+  el.style.color = online ? 'var(--ok)' : 'var(--ink-3)';
+}
+
 /* ── fetch loop ───────────────────────────────────────── */
 
 async function refresh() {
@@ -411,6 +427,7 @@ async function refresh() {
     renderInbox(data.email);
     renderMusic(data.music);
     renderProject(data.project);
+    renderPresence(data.presence);
   } catch (err) {
     console.warn('dashboard refresh failed:', err);
   }
@@ -418,5 +435,12 @@ async function refresh() {
 
 renderStaticBoot();
 loadQuotes();
-refresh();
+pingPresence().then(refresh);
 setInterval(refresh, POLL_MS);
+setInterval(pingPresence, 30_000);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    pingPresence();
+    refresh();
+  }
+});
