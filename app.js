@@ -3,7 +3,8 @@
 // Missing fields fall through: the existing static markup acts as placeholder.
 
 const API = 'https://personal-os-api.collinsoik.dev';
-const POLL_MS = 60_000;
+const POLL_MS = 30_000;
+const MUSIC_TICK_MS = 500;
 
 const USER = {
   fullNameHtml: 'Collin <em>Soik</em>',
@@ -213,26 +214,70 @@ function renderInbox(email) {
   });
 }
 
+let musicAnchor = null; // { ...payload, received_at: performance.now() }
+let musicLastTrack = null;
+let musicTimer = null;
+let musicLastSplit = -1;
+
 function renderMusic(m) {
+  if (!m) return;
+  musicAnchor = { ...m, received_at: performance.now() };
+  const trackKey = `${m.title}|${m.artist}|${m.album || ''}`;
+  if (trackKey !== musicLastTrack) {
+    musicLastTrack = trackKey;
+    paintMusicStatic();
+    musicLastSplit = -1; // force bar repaint on track change
+  }
+  applyMusicTick();
+  if (musicTimer == null) {
+    musicTimer = setInterval(applyMusicTick, MUSIC_TICK_MS);
+  }
+}
+
+function paintMusicStatic() {
+  const m = musicAnchor;
   if (!m) return;
   const hasTrack = m.title && m.title !== '—';
   if (hasTrack) {
     setHTML('.card.playing .np-meta .title', escapeHtml(m.title));
     setText('.card.playing .np-meta .sub', [m.artist, m.album].filter(Boolean).join(' · '));
   }
-  if (m.duration_ms && m.progress_ms != null) {
-    const pct = Math.min(1, m.progress_ms / m.duration_ms);
-    const bars = $$('#wave i');
-    const split = Math.round(bars.length * pct);
-    bars.forEach((b, i) => {
-      b.classList.remove('played', 'future');
-      b.classList.add(i < split ? 'played' : 'future');
-    });
-    setText('#npTime', msToMS(m.progress_ms));
-    setText('.card.playing .np-ctrl > span:last-child', msToMS(m.duration_ms));
+  const cover = document.querySelector('.card.playing .cover');
+  if (cover) {
+    cover.style.setProperty(
+      '--album-art',
+      m.cover_url ? `url("${m.cover_url}")` : 'none',
+    );
   }
-  setText('.card.playing .card-head .mono:last-child', m.playing ? 'Playing' : 'Paused');
 }
+
+function applyMusicTick() {
+  const m = musicAnchor;
+  if (!m) return;
+  setText('.card.playing .card-head .mono:last-child', m.playing ? 'Playing' : 'Paused');
+  if (!m.duration_ms || m.progress_ms == null) return;
+  let progress = m.progress_ms;
+  if (m.playing) {
+    progress = Math.min(
+      m.duration_ms,
+      m.progress_ms + (performance.now() - m.received_at),
+    );
+  }
+  const pct = Math.min(1, progress / m.duration_ms);
+  const bars = $$('#wave i');
+  const split = Math.round(bars.length * pct);
+  if (split !== musicLastSplit) {
+    bars.forEach((b, i) => {
+      const played = i < split;
+      b.classList.toggle('played', played);
+      b.classList.toggle('future', !played);
+    });
+    musicLastSplit = split;
+  }
+  setText('#npTime', msToMS(Math.round(progress)));
+  setText('.card.playing .np-ctrl > span:last-child', msToMS(m.duration_ms));
+}
+
 function msToMS(ms) {
   const s = Math.floor(ms / 1000);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;

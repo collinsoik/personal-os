@@ -48,7 +48,7 @@ def start() -> None:
     _scheduler.add_job(
         poll_spotify,
         "interval",
-        seconds=30,
+        seconds=20,
         id="spotify_poll",
         max_instances=1,
         coalesce=True,
