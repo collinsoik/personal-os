@@ -244,10 +244,11 @@ function paintMusicStatic() {
   }
   const cover = document.querySelector('.card.playing .cover');
   if (cover) {
-    cover.style.setProperty(
-      '--album-art',
-      m.cover_url ? `url("${m.cover_url}")` : 'none',
-    );
+    if (m.cover_url) {
+      cover.style.setProperty('--album-art', `url("${m.cover_url}")`);
+    } else {
+      cover.style.removeProperty('--album-art');
+    }
   }
 }
 
