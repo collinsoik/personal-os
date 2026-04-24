@@ -286,7 +286,14 @@ function renderDailyQuote() {
   const now = new Date();
   const daysSinceEpoch = Math.floor(now.getTime() / 86_400_000);
   const q = LOCAL_QUOTES[daysSinceEpoch % LOCAL_QUOTES.length];
-  setText('.card.thought blockquote', q.text);
+  const bq = $('.card.thought blockquote');
+  if (bq) {
+    bq.textContent = q.text;
+    // Shrink font to keep long quotes inside the card without clipping.
+    const len = q.text.length;
+    const size = len <= 120 ? 17 : len <= 180 ? 15 : len <= 240 ? 14 : 13;
+    bq.style.fontSize = `${size}px`;
+  }
   setText('.card.thought .attr b', q.author ? `— ${q.author}` : '');
   setText('.card.thought .attr span', q.source || formatTopDate(now));
 }
