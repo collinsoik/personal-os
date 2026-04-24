@@ -21,6 +21,15 @@ class Settings:
         "http://127.0.0.1:3010/api/oauth/spotify/callback",
     )
 
+    google_client_id: str = os.getenv("GOOGLE_CLIENT_ID", "")
+    google_client_secret: str = os.getenv("GOOGLE_CLIENT_SECRET", "")
+    google_redirect_uri: str = os.getenv(
+        "GOOGLE_REDIRECT_URI",
+        "http://127.0.0.1:3010/api/oauth/google/callback",
+    )
+
+    personal_tz: str = os.getenv("PERSONAL_OS_TZ", "America/New_York")
+
     frontend_url: str = os.getenv(
         "FRONTEND_URL",
         "https://personal-os-sage-tau.vercel.app/",

@@ -11,7 +11,7 @@ from datetime import datetime
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy.orm import Session
 
-from . import models, spotify
+from . import gcal, models, spotify
 from .db import SessionLocal
 
 log = logging.getLogger(__name__)
@@ -40,6 +40,17 @@ async def poll_spotify() -> None:
         log.exception("Spotify poll failed")
 
 
+async def poll_calendar() -> None:
+    try:
+        with SessionLocal() as db:
+            snap = await gcal.fetch_calendar_snapshot(db)
+            if snap is None:
+                return
+            _write_cache(db, "calendar", snap)
+    except Exception:
+        log.exception("Calendar poll failed")
+
+
 def start() -> None:
     global _scheduler
     if _scheduler is not None:
@@ -50,6 +61,15 @@ def start() -> None:
         "interval",
         seconds=20,
         id="spotify_poll",
+        max_instances=1,
+        coalesce=True,
+        next_run_time=datetime.now(),
+    )
+    _scheduler.add_job(
+        poll_calendar,
+        "interval",
+        seconds=300,
+        id="calendar_poll",
         max_instances=1,
         coalesce=True,
         next_run_time=datetime.now(),

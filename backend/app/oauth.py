@@ -3,6 +3,10 @@
 Spotify flow (task #6):
     GET /api/oauth/spotify/login?s=<write_secret>  -> redirect to Spotify
     GET /api/oauth/spotify/callback?code&state     -> save tokens, snapshot, confirm
+
+Google flow (task #5):
+    GET /api/oauth/google/login?s=<write_secret>   -> redirect to Google
+    GET /api/oauth/google/callback?code&state      -> save tokens, snapshot, confirm
 """
 from __future__ import annotations
 
@@ -12,7 +16,7 @@ from datetime import datetime
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from . import models, spotify
+from . import gcal, models, spotify
 from .config import settings
 from .db import SessionLocal
 
@@ -75,6 +79,61 @@ async def spotify_callback(
 </style>
 <h1>Spotify connected.</h1>
 <p>Tokens saved. The dashboard will pick up a fresh snapshot within 30 seconds.</p>
+<p><a href="{front}">Back to Personal OS</a></p>
+"""
+    return HTMLResponse(html)
+
+
+@router.get("/oauth/google/login")
+def google_login(s: str | None = Query(default=None)):
+    _require_secret(s)
+    if not settings().google_client_id:
+        raise HTTPException(status_code=500, detail="GOOGLE_CLIENT_ID not configured")
+    return RedirectResponse(gcal.build_authorize_url(), status_code=302)
+
+
+@router.get("/oauth/google/callback")
+async def google_callback(
+    code: str | None = Query(default=None),
+    state: str | None = Query(default=None),
+    error: str | None = Query(default=None),
+):
+    if error:
+        raise HTTPException(status_code=400, detail=f"Google auth error: {error}")
+    if not code:
+        raise HTTPException(status_code=400, detail="missing code")
+    if not gcal.consume_state(state):
+        raise HTTPException(status_code=400, detail="invalid state")
+
+    try:
+        token_payload = await gcal.exchange_code(code)
+    except Exception as e:
+        log.exception("Google token exchange failed")
+        raise HTTPException(status_code=502, detail=f"token exchange failed: {e}")
+
+    with SessionLocal() as db:
+        gcal.save_tokens(db, token_payload)
+        snap = await gcal.fetch_calendar_snapshot(db)
+        if snap:
+            row = db.get(models.CachedPayload, "calendar")
+            if row is None:
+                db.add(models.CachedPayload(key="calendar", payload=snap))
+            else:
+                row.payload = snap
+                row.updated_at = datetime.utcnow()
+            db.commit()
+
+    front = settings().frontend_url
+    html = f"""<!doctype html>
+<meta charset="utf-8">
+<title>Google Calendar connected</title>
+<style>
+  body{{font-family:system-ui,sans-serif;padding:48px;max-width:520px;color:#222}}
+  h1{{font-weight:500;letter-spacing:-.01em}}
+  a{{color:#222}}
+</style>
+<h1>Google Calendar connected.</h1>
+<p>Tokens saved. The dashboard will pick up a fresh snapshot within a minute.</p>
 <p><a href="{front}">Back to Personal OS</a></p>
 """
     return HTMLResponse(html)
