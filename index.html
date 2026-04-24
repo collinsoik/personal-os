@@ -664,11 +664,15 @@
     const hh = document.getElementById('hh');
     const mm = document.getElementById('mm');
     const ss = document.getElementById('ss');
+    const sub = document.querySelector('.hero-r .sub');
     function tick(){
       const d = new Date();
-      hh.textContent = String(d.getHours()).padStart(2,'0');
+      const h24 = d.getHours();
+      const h12 = ((h24 + 11) % 12) + 1;
+      hh.textContent = String(h12).padStart(2,'0');
       mm.textContent = String(d.getMinutes()).padStart(2,'0');
       ss.textContent = String(d.getSeconds()).padStart(2,'0');
+      if (sub) sub.textContent = `${h24 < 12 ? 'AM' : 'PM'} · Local Time`;
     }
     tick(); setInterval(tick, 1000);
   })();
