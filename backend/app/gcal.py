@@ -17,7 +17,7 @@ import secrets
 import time
 from datetime import datetime, timedelta, timezone
 from typing import Any
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 from zoneinfo import ZoneInfo
 
 import httpx
@@ -215,7 +215,7 @@ async def fetch_calendar_snapshot(db: Session) -> dict | None:
             data = await _get(
                 client,
                 token,
-                f"/calendars/{cal_id}/events",
+                f"/calendars/{quote(cal_id, safe='')}/events",
                 {
                     "timeMin": time_min,
                     "timeMax": time_max,
