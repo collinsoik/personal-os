@@ -5,15 +5,21 @@ from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
+from . import poller
 from .config import settings
 from .dashboard import build_dashboard
 from .db import get_session, init_db
+from .oauth import router as oauth_router
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     init_db()
-    yield
+    poller.start()
+    try:
+        yield
+    finally:
+        poller.stop()
 
 
 app = FastAPI(title="Personal OS API", version="0.1.0", lifespan=lifespan)
@@ -24,6 +30,8 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
+
+app.include_router(oauth_router, prefix="/api")
 
 
 def require_secret(x_po_secret: str | None = Header(default=None)):

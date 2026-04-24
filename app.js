@@ -9,6 +9,7 @@ const USER = {
   fullNameHtml: 'Collin <em>Soik</em>',
   subtitle: 'Student · Raleigh',
   topBar: '◎ Personal OS',
+  location: { label: 'Raleigh, NC', lat: 35.7796, lon: -78.6382 },
 };
 
 const DAY_LABELS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -41,11 +42,6 @@ function greeting(date) {
   return 'Good <em>night,</em>';
 }
 
-function formatTop(date) {
-  const pad = (n) => String(n).padStart(2, '0');
-  return `${date.getFullYear()}${pad(date.getMonth()+1)}${pad(date.getDate())}·${pad(date.getHours())}${pad(date.getMinutes())}`;
-}
-
 function dayOfYear(date) {
   const start = new Date(date.getFullYear(), 0, 0);
   const diff = date - start;
@@ -64,7 +60,6 @@ function renderStaticBoot() {
   setText('.hero-l .sub', `${longDay} · ${MONTHS[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()} · Day ${dayOfYear(now)} of 365`);
   setHTML('.calendar h2', `${longDay}, <em>${MONTHS[now.getMonth()]} ${now.getDate()}</em>`);
   setText('.card.calendar .card-head .mono:last-child', `${MONTHS_SHORT[now.getMonth()]} ${now.getFullYear()}`);
-  setText('#ymd', formatTop(now));
   buildWeekStrip(now);
 }
 
@@ -296,9 +291,25 @@ function renderDailyQuote() {
   setText('.card.thought .attr span', q.source || formatTopDate(now));
 }
 
+async function renderWeather() {
+  const { label, lat, lon } = USER.location;
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m&temperature_unit=fahrenheit`;
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) return;
+    const data = await res.json();
+    const temp = data?.current?.temperature_2m;
+    if (temp == null) return;
+    setText('#loc', `${label} · ${Math.round(temp)}°F`);
+  } catch (err) {
+    console.warn('weather fetch failed:', err);
+  }
+}
+
 /* ── fetch loop ───────────────────────────────────────── */
 
 async function refresh() {
+  renderWeather();
   try {
     const res = await fetch(`${API}/api/dashboard`, { cache: 'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
