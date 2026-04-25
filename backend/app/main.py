@@ -14,6 +14,7 @@ from .deps import require_secret
 from .events import router as events_router
 from .mcp_server import mcp, mcp_app
 from .oauth import router as oauth_router
+from .oauth_server import router as oauth_server_router
 from .routine import router as routine_router
 
 
@@ -41,6 +42,7 @@ app.include_router(oauth_router, prefix="/api")
 app.include_router(control_router, prefix="/api")
 app.include_router(events_router, prefix="/api")
 app.include_router(routine_router, prefix="/api")
+app.include_router(oauth_server_router)
 
 app.mount("/mcp", mcp_app)
 

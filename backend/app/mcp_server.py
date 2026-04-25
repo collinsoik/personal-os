@@ -13,6 +13,7 @@ from starlette.responses import JSONResponse
 
 from .config import settings
 from .db import SessionLocal
+from .oauth_server import validate_access_token
 from .routine import RoutineDigest, persist_digest
 
 
@@ -44,18 +45,40 @@ def submit_routine_digest(digest: RoutineDigest) -> dict[str, Any]:
     return {"ok": True}
 
 
-class BearerAuthMiddleware(BaseHTTPMiddleware):
-    """Gate every MCP request on Authorization: Bearer <PERSONAL_OS_MCP_TOKEN>."""
+class OAuthBearerMiddleware(BaseHTTPMiddleware):
+    """Validate Authorization: Bearer <access_token> against OAuthInboundToken.
+
+    On 401, emits the WWW-Authenticate header that points claude.ai's MCP
+    client back at our PRM so it can re-discover the AS and re-auth.
+    """
 
     async def dispatch(self, request, call_next):
-        token = settings().mcp_token
-        if not token:
-            return JSONResponse({"error": "mcp_token_unset"}, status_code=503)
+        issuer = (settings().oauth_issuer or "").rstrip("/")
+        prm_url = f"{issuer}/.well-known/oauth-protected-resource/mcp"
+        challenge = (
+            'Bearer error="invalid_token", '
+            'error_description="Authentication required", '
+            f'resource_metadata="{prm_url}"'
+        )
+
         auth = request.headers.get("authorization", "")
-        if auth != f"Bearer {token}":
-            return JSONResponse({"error": "unauthorized"}, status_code=401)
+        if not auth.lower().startswith("bearer "):
+            return JSONResponse(
+                {"error": "invalid_token", "error_description": "Authentication required"},
+                status_code=401,
+                headers={"WWW-Authenticate": challenge},
+            )
+        token = auth.split(" ", 1)[1].strip()
+        with SessionLocal() as db:
+            row = validate_access_token(db, token)
+        if row is None:
+            return JSONResponse(
+                {"error": "invalid_token", "error_description": "Token invalid or expired"},
+                status_code=401,
+                headers={"WWW-Authenticate": challenge},
+            )
         return await call_next(request)
 
 
 mcp_app = mcp.streamable_http_app()
-mcp_app.add_middleware(BearerAuthMiddleware)
+mcp_app.add_middleware(OAuthBearerMiddleware)

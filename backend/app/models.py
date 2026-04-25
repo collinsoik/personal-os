@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import JSON, DateTime, Integer, String, Text
+from sqlalchemy import JSON, Boolean, DateTime, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .db import Base
@@ -76,3 +76,26 @@ class HealthSnapshot(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     received_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
     payload: Mapped[dict] = mapped_column(JSON)
+
+
+class OAuthInboundCode(Base):
+    """Single-use authorization codes issued by /authorize, exchanged at /token."""
+    __tablename__ = "oauth_inbound_codes"
+    code: Mapped[str] = mapped_column(String(128), primary_key=True)
+    redirect_uri: Mapped[str] = mapped_column(Text)
+    code_challenge: Mapped[str] = mapped_column(String(128))
+    scope: Mapped[str] = mapped_column(String(128), default="mcp")
+    expires_at: Mapped[datetime] = mapped_column(DateTime, index=True)
+    used: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class OAuthInboundToken(Base):
+    """Bearer access tokens minted by /token; presented on /mcp/* requests."""
+    __tablename__ = "oauth_inbound_tokens"
+    access_token: Mapped[str] = mapped_column(String(128), primary_key=True)
+    refresh_token: Mapped[str] = mapped_column(String(128), unique=True, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, index=True)
+    scope: Mapped[str] = mapped_column(String(128), default="mcp")
+    revoked: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
