@@ -58,11 +58,14 @@ def _current_snapshot(key: str) -> Any | None:
 async def _stream(request: Request):
     q = subscribe()
     try:
-        # Replay the latest cached music snapshot immediately so late joiners
+        # Replay the latest cached snapshots immediately so late joiners
         # don't see a blank card.
         initial = _current_snapshot("spotify")
         if initial is not None:
             yield _format("music", initial)
+        routine_snap = _current_snapshot("routine")
+        if routine_snap is not None:
+            yield _format("routine", routine_snap)
 
         # Heartbeat + event loop. The heartbeat keeps intermediaries (Cloudflare,
         # etc.) from closing the connection during idle periods.

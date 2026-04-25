@@ -13,6 +13,7 @@ from .db import get_session, init_db
 from .deps import require_secret
 from .events import router as events_router
 from .oauth import router as oauth_router
+from .routine import router as routine_router
 
 
 @asynccontextmanager
@@ -37,6 +38,7 @@ app.add_middleware(
 app.include_router(oauth_router, prefix="/api")
 app.include_router(control_router, prefix="/api")
 app.include_router(events_router, prefix="/api")
+app.include_router(routine_router, prefix="/api")
 
 
 @app.get("/api/health")

@@ -38,7 +38,7 @@ def build_dashboard(db: Session) -> dict[str, Any]:
         "top_tracks": [],
         "hours_this_week": 0,
     }
-    email = _cached(db, "email") or {"unread": 0, "items": []}
+    routine = _cached(db, "routine")
     vitals = _cached(db, "health") or {
         "steps": None,
         "heart_bpm": None,
@@ -117,7 +117,7 @@ def build_dashboard(db: Session) -> dict[str, Any]:
         "now": now.isoformat(),
         "calendar": calendar,
         "music": music,
-        "email": email,
+        "routine": routine,
         "vitals": vitals,
         "thought": thought,
         "habits": habits,

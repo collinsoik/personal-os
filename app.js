@@ -224,31 +224,174 @@ function renderCalendar(cal) {
   }
 }
 
-function renderInbox(email) {
-  if (!email) return;
-  if (typeof email.unread === 'number') {
-    setText('.card.inbox .card-head .mono:last-child', `${email.unread} unread`);
-  }
-  if (!email.items?.length) return;
-  const list = $('.card.inbox .list');
-  if (!list) return;
-  list.innerHTML = '';
-  const palette = ['a','b','c','d'];
-  email.items.slice(0, 5).forEach((m, i) => {
-    const initials = (m.from || '??').split(/\s+/).map(s => s[0]).slice(0, 2).join('').toUpperCase();
-    const row = document.createElement('div');
-    row.className = 'row';
-    const tag = m.urgent ? `<span class="tag">Urgent</span>` : '';
-    row.innerHTML = `
-      <div class="ava ${palette[i % palette.length]}">${escapeHtml(initials)}</div>
-      <div>
-        <div class="name">${escapeHtml(m.from || '')} ${tag}</div>
-        <div class="prev">${escapeHtml(m.preview || m.subject || '')}</div>
-      </div>
-      <div class="time">${escapeHtml(m.time_rel || '')}</div>`;
-    list.appendChild(row);
-  });
+/* Routine digest — UI driven by static mock data for now.
+   Real backend wiring lands later. */
+const ROUTINE_DATA = {
+  scanned: 47,
+  flagged: 9,
+  urgent: [
+    { id: 'u1', mono: 'ML', tone: '#F0C7B5', from: 'Maya Lin',
+      subject: 'Re: v2.7 assets — need your sign-off today',
+      summary: 'Maya is blocked on the launch hand-off. She needs the brand pack approved before 4pm or design pushes a day.',
+      action: 'Reply with go/no-go on the hero treatment.', time: '12m' },
+    { id: 'u2', mono: 'AC', tone: '#E8C4B8', from: 'Arc Collective',
+      subject: 'Residency contract — countersign by EOD',
+      summary: 'Welcome packet attached; the host needs a countersigned PDF returned today to lock the studio dates.',
+      action: 'Sign and send back the residency PDF.', time: '1h' },
+  ],
+  high: [
+    { id: 'h1', mono: 'TH', tone: '#C8D8C2', from: 'Theo Harris',
+      subject: 'Moved our sync · new calendar invite attached',
+      summary: 'Pushed to Thursday 3pm — wants pre-read on the Q3 retro before the call.', time: '48m' },
+    { id: 'h2', mono: 'EN', tone: '#BBD0DE', from: 'Eliza N.',
+      subject: '8pm still on? Booked us a corner table',
+      summary: 'Confirming dinner; will swing by the studio after if you want to walk over.', time: '2h' },
+    { id: 'h3', mono: 'JR', tone: '#E0D0B8', from: 'Jules Reyes',
+      subject: 'Q3 budget — three line items flagged',
+      summary: 'Finance wants context on travel, contractors, and the studio sublet before Friday.', time: '3h' },
+  ],
+  fyi: [
+    { id: 'f1', from: 'Stripe',  subject: 'Payout of $4,210 on the way',         time: '4h' },
+    { id: 'f2', from: 'GitHub',  subject: '3 PRs awaiting your review',          time: '5h' },
+    { id: 'f3', from: 'Figma',   subject: 'New comments on Launch / hero',       time: '7h' },
+    { id: 'f4', from: 'Read.cv', subject: 'Weekly digest — 12 reads',            time: '9h' },
+  ],
+};
+
+const routineState = { dismissals: {}, fyiExpanded: false, digest: null };
+
+const ROUTINE_TONE_PALETTE = ['#F0C7B5','#E8C4B8','#C8D8C2','#BBD0DE','#E0D0B8','#D8C8E0','#C2D8D0'];
+function routineMono(name) {
+  return String(name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map(s => s[0].toUpperCase()).join('') || '?';
 }
+function routineTone(id, idx) {
+  const seed = String(id || idx || '');
+  let h = 0; for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  return ROUTINE_TONE_PALETTE[h % ROUTINE_TONE_PALETTE.length];
+}
+
+function renderRoutine(digest) {
+  const body = document.getElementById('rcBody');
+  if (!body) return;
+  if (digest !== undefined) routineState.digest = digest;
+  const d = routineState.digest || ROUTINE_DATA;
+  setText('.routine .rc-meta .counts', `${d.scanned ?? 0}/${d.flagged ?? 0}`);
+
+  const fyiAll = d.fyi || [];
+  const fyiVisible = routineState.fyiExpanded ? fyiAll : fyiAll.slice(0, 3);
+  const fyiHidden = fyiAll.length - fyiVisible.length;
+
+  const urgentHtml = (d.urgent || []).map((it, i) => {
+    const dismiss = routineState.dismissals[it.id];
+    if (dismiss) {
+      return `<div class="rc-dismissed">${dismiss === 'done' ? '✓ marked done' : '↩ snoozed'} — ${escapeHtml(it.from)}</div>`;
+    }
+    const mono = it.mono || routineMono(it.from);
+    const tone = it.tone || routineTone(it.id, i);
+    const actHtml = it.action ? `<div class="act">↳ ${escapeHtml(it.action)}</div>` : '';
+    return `
+      <div class="rc-urgent-card" data-id="${it.id}">
+        <div class="row1">
+          <div class="rc-avatar" style="background:${tone}">${escapeHtml(mono)}</div>
+          <div class="body">
+            <div class="top">
+              <div class="from">${escapeHtml(it.from)} <span class="rc-pill">Urgent</span></div>
+              <div class="time">${escapeHtml(it.time || '')}</div>
+            </div>
+            <div class="subj">${escapeHtml(it.subject)}</div>
+            <div class="summ">${escapeHtml(it.summary || '')}</div>
+            ${actHtml}
+            <div class="rc-actions">
+              <button data-act="done" data-id="${it.id}">Done</button>
+              <button data-act="snooze" data-id="${it.id}">Snooze</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  const highHtml = (d.high || []).map((it, i) => {
+    const dismiss = routineState.dismissals[it.id];
+    if (dismiss) {
+      return `<div class="rc-high-row rc-dismissed">${dismiss === 'done' ? '✓ done' : '↩ snoozed'} — ${escapeHtml(it.from)}</div>`;
+    }
+    const mono = it.mono || routineMono(it.from);
+    const tone = it.tone || routineTone(it.id, i);
+    return `
+      <div class="rc-high-row" data-id="${it.id}">
+        <div class="rc-avatar" style="background:${tone}">${escapeHtml(mono)}</div>
+        <div class="body">
+          <div class="top">
+            <div class="from">${escapeHtml(it.from)}</div>
+            <div class="time">${escapeHtml(it.time || '')}</div>
+          </div>
+          <div class="subj">${escapeHtml(it.subject)}</div>
+          <div class="summ">${escapeHtml(it.summary || '')}</div>
+          <div class="rc-actions">
+            <button data-act="done" data-id="${it.id}">Done</button>
+            <button data-act="snooze" data-id="${it.id}">Snooze</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  const fyiHtml = fyiVisible.map((it) => {
+    if (routineState.dismissals[it.id]) return '';
+    return `
+      <div class="rc-fyi-row" data-id="${it.id}">
+        <div class="body">
+          <span class="from">${escapeHtml(it.from)}</span>
+          <span class="subj">${escapeHtml(it.subject)}</span>
+        </div>
+        <span class="time">${escapeHtml(it.time || '')}</span>
+      </div>`;
+  }).join('');
+
+  const moreBtn = (fyiHidden > 0 || routineState.fyiExpanded)
+    ? `<button class="rc-more" data-act="toggle-fyi">${routineState.fyiExpanded ? '↑ collapse' : `+ ${fyiHidden} more`}</button>`
+    : '';
+
+  body.innerHTML = `
+    <div class="rc-section urgent">
+      <div class="rc-col-head">
+        <div class="lbl"><span class="ix">A</span><span>Urgent</span></div>
+        <div class="cnt">${(d.urgent || []).length} need reply</div>
+      </div>
+      ${urgentHtml}
+    </div>
+    <div class="rc-section high">
+      <div class="rc-col-head">
+        <div class="lbl"><span class="ix">B</span><span>High importance</span></div>
+        <div class="cnt">${(d.high || []).length} this run</div>
+      </div>
+      ${highHtml}
+    </div>
+    <div class="rc-section fyi">
+      <div class="rc-col-head">
+        <div class="lbl"><span class="ix">C</span><span>FYI</span></div>
+        <div class="cnt">${fyiAll.length}</div>
+      </div>
+      ${fyiHtml}
+      ${moreBtn}
+    </div>
+  `;
+}
+
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.routine [data-act]');
+  if (!btn) return;
+  const act = btn.dataset.act;
+  if (act === 'toggle-fyi') {
+    routineState.fyiExpanded = !routineState.fyiExpanded;
+    renderRoutine();
+    return;
+  }
+  const id = btn.dataset.id;
+  if (id && (act === 'done' || act === 'snooze')) {
+    routineState.dismissals[id] = act === 'done' ? 'done' : 'snoozed';
+    renderRoutine();
+  }
+});
 
 let musicAnchor = null; // { ...payload, received_at: performance.now() }
 let musicLastTrack = null;
@@ -392,6 +535,9 @@ function connectEvents() {
   es.addEventListener('music', (ev) => {
     try { renderMusic(JSON.parse(ev.data)); } catch {}
   });
+  es.addEventListener('routine', (ev) => {
+    try { renderRoutine(JSON.parse(ev.data)); } catch {}
+  });
   // EventSource auto-reconnects on transient errors; no-op on `onerror`.
   return es;
 }
@@ -499,7 +645,7 @@ async function refresh() {
     renderThought(data.thought);
     renderHabits(data.habits);
     renderCalendar(data.calendar);
-    renderInbox(data.email);
+    renderRoutine(data.routine ?? null);
     renderMusic(data.music);
     renderProject(data.project);
     renderPresence(data.presence);
@@ -509,6 +655,7 @@ async function refresh() {
 }
 
 renderStaticBoot();
+renderRoutine();
 loadQuotes();
 wireMusicControls();
 pingPresence().then(refresh);

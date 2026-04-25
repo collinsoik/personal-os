@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=1440" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg: oklch(0.945 0.018 80);
@@ -177,7 +177,8 @@
   .thought .attr b{color: var(--ink-2); font-weight:500; letter-spacing:.08em}
 
   /* Calendar */
-  .calendar{grid-column: 2/3; grid-row: 2/4; display:flex; flex-direction:column}
+  .calendar{grid-column: 3/4; grid-row: 2/3; display:flex; flex-direction:column; min-height: 0; overflow: hidden;}
+  .calendar .sched{flex: 1; min-height: 0; overflow-y: auto;}
   .calendar h2{font-family:var(--serif); font-weight:500; font-size: 22px; margin: 2px 0 10px; letter-spacing:-.01em}
   .calendar h2 em{font-style:italic; font-weight:400}
   .days{display:grid; grid-template-columns: repeat(7,1fr); gap: 6px; margin-bottom: 14px}
@@ -204,20 +205,96 @@
   .ev .marker{width:6px; height:6px; border-radius:50%; background: var(--line); margin-top:8px}
   .ev.now .marker{background: var(--accent); box-shadow: 0 0 0 3px oklch(0.66 0.155 45 / .18)}
 
-  /* Inbox */
-  .inbox{grid-column: 3/4; grid-row: 2/3;}
-  .inbox .list{display:flex; flex-direction:column; gap: 2px; margin-top:4px}
-  .inbox .row{display:grid; grid-template-columns: 32px 1fr auto; gap: 12px; align-items:center; padding: 10px 4px; border-top:1px solid var(--line-2)}
-  .inbox .row:first-child{border-top:0}
-  .ava{width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family: var(--mono); font-size: 10.5px; font-weight:500; color: oklch(0.3 0.02 60); letter-spacing:.02em;}
-  .ava.a{background: oklch(0.88 0.06 45); color: oklch(0.35 0.08 40)}
-  .ava.b{background: oklch(0.86 0.05 140); color: oklch(0.32 0.06 140)}
-  .ava.c{background: oklch(0.85 0.055 240); color: oklch(0.32 0.07 250)}
-  .ava.d{background: oklch(0.86 0.05 30); color: oklch(0.35 0.08 25)}
-  .inbox .name{font-weight:600; font-size: 13px}
-  .inbox .prev{font-size: 12px; color: var(--ink-3); margin-top:2px}
-  .inbox .tag{display:inline-block; font-family: var(--mono); font-size: 9px; padding: 2px 6px; border-radius: 4px; background: var(--accent); color: oklch(0.98 0.01 80); margin-left: 6px; letter-spacing:.12em; text-transform:uppercase; vertical-align: 2px}
-  .inbox .time{font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); letter-spacing:.06em}
+  /* Routine — email digest card (replaces inbox) */
+  .routine{
+    grid-column: 2/3; grid-row: 2/4;
+    --rc-bg: #F0EBE3;
+    --rc-bg-soft: #E8E2D7;
+    --rc-urgent-bg: #FBF7EF;
+    --rc-ink: #1F1B16;
+    --rc-ink-soft: #5A5048;
+    --rc-ink-mute: #8A8073;
+    --rc-hair: rgba(31, 27, 22, 0.10);
+    --rc-hair-strong: rgba(31, 27, 22, 0.18);
+    --rc-urgent: #D2654A;
+    --rc-urgent-soft: #F2D9CF;
+    --rc-high: #B89464;
+    --rc-fyi: #7A8A82;
+    --rc-serif: "Source Serif 4", "Source Serif Pro", Georgia, serif;
+    background: var(--rc-bg);
+    color: var(--rc-ink);
+    border: 1px solid var(--rc-hair-strong);
+    border-radius: 14px;
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .routine .rc-head{display:flex; align-items:baseline; justify-content:space-between; padding: 14px 18px 12px;}
+  .routine .rc-title{font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; color: var(--rc-ink); text-transform: uppercase; font-weight: 600; display:flex; align-items:baseline; gap: 10px;}
+  .routine .rc-title em{font-style:normal; color: var(--rc-ink-mute); font-weight: 400}
+  .routine .rc-meta{font-family: var(--mono); font-size: 11px; letter-spacing: 0.10em; color: var(--rc-ink-mute); text-transform: uppercase; display:flex; gap:10px; align-items:baseline;}
+  .routine .rc-meta .flagged{color: var(--rc-urgent); font-weight: 600;}
+  .routine .rc-subrow{padding: 0 18px 12px; border-bottom: 1px solid var(--rc-hair); display:flex; align-items:baseline; justify-content:space-between; gap: 12px; position: relative;}
+  .routine .rc-summary{font-family: var(--rc-serif); font-size: 13.5px; color: var(--rc-ink-soft); line-height: 1.4; max-width: 78%;}
+  .routine .rc-summary b{color: var(--rc-ink); font-weight: 600;}
+  .routine .rc-next{position: relative; font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--rc-ink-mute); white-space: nowrap; cursor: default;}
+  .routine .rc-pop{position: absolute; right: 0; top: calc(100% + 8px); background: #1F1B16; color: #F0EBE3; padding: 10px 12px; border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.18); font-family: var(--mono); font-size: 10px; letter-spacing: 0.10em; z-index: 5; min-width: 160px; opacity: 0; pointer-events: none; transition: opacity .15s ease; text-transform: uppercase;}
+  .routine:hover .rc-pop, .routine .rc-next:hover .rc-pop{opacity: 1;}
+  .routine .rc-pop .lbl{opacity: .55; margin-bottom: 6px;}
+  .routine .rc-pop .run{display:block;}
+  .routine .rc-pop .run.current{color: #E8C4B8;}
+
+  .routine .rc-body{flex: 1; min-height: 0; overflow-y: auto; padding: 14px 18px 18px; display:flex; flex-direction:column; gap: 18px;}
+
+  .routine .rc-col-head{display:flex; align-items:baseline; justify-content:space-between; padding-bottom: 8px; border-bottom: 1px solid var(--rc-hair); margin-bottom: 10px;}
+  .routine .rc-col-head .lbl{font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 600; display:flex; align-items:baseline; gap: 8px;}
+  .routine .rc-col-head .lbl .ix{color: var(--rc-ink-mute); font-weight: 400;}
+  .routine .rc-col-head .cnt{font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; color: var(--rc-ink-mute); text-transform: uppercase;}
+  .routine .rc-section.urgent .rc-col-head .lbl{color: var(--rc-urgent);}
+  .routine .rc-section.high   .rc-col-head .lbl{color: var(--rc-high);}
+  .routine .rc-section.fyi    .rc-col-head .lbl{color: var(--rc-fyi);}
+
+  .routine .rc-avatar{width:28px; height:28px; border-radius:50%; display:grid; place-items:center; font-family: var(--mono); font-size: 9px; font-weight: 500; color: var(--rc-ink); letter-spacing: 0.04em; flex-shrink: 0;}
+
+  .routine .rc-pill{display:inline-block; padding: 2px 7px; border-radius: 5px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; font-weight: 600; text-transform: uppercase; vertical-align: 2px; background: var(--rc-urgent); color: #FFF6F0; margin-left: 6px;}
+
+  .routine .rc-urgent-card{position: relative; padding: 11px 12px 12px; background: var(--rc-urgent-bg); border: 1px solid var(--rc-hair); border-left: 3px solid var(--rc-urgent); border-radius: 6px; margin-bottom: 9px;}
+  .routine .rc-urgent-card .row1{display:flex; gap:10px; align-items:flex-start;}
+  .routine .rc-urgent-card .body{flex:1; min-width:0;}
+  .routine .rc-urgent-card .top{display:flex; align-items:baseline; justify-content:space-between; gap:8px;}
+  .routine .rc-urgent-card .from{font-family: var(--rc-serif); font-weight: 600; font-size: 14px; color: var(--rc-ink); line-height: 1.2;}
+  .routine .rc-urgent-card .time{font-family: var(--mono); font-size: 10px; color: var(--rc-ink-mute); letter-spacing: 0.04em; flex-shrink: 0;}
+  .routine .rc-urgent-card .subj{font-family: var(--rc-serif); font-size: 13px; color: var(--rc-ink-soft); margin-top: 1px; line-height: 1.35;}
+  .routine .rc-urgent-card .summ{font-family: var(--rc-serif); font-size: 12.5px; color: var(--rc-ink); margin-top: 7px; line-height: 1.45;}
+  .routine .rc-urgent-card .act{margin-top: 8px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.10em; text-transform: uppercase; color: var(--rc-urgent); font-weight: 600; line-height: 1.5; padding-right: 4px;}
+
+  .routine .rc-high-row{display:flex; gap:10px; padding: 9px 2px; border-bottom: 1px solid var(--rc-hair); position: relative;}
+  .routine .rc-high-row .body{flex:1; min-width:0;}
+  .routine .rc-high-row .top{display:flex; align-items:baseline; justify-content:space-between; gap:8px;}
+  .routine .rc-high-row .from{font-family: var(--rc-serif); font-weight:600; font-size: 14px; color: var(--rc-ink); line-height: 1.2;}
+  .routine .rc-high-row .time{font-family: var(--mono); font-size: 10px; color: var(--rc-ink-mute); flex-shrink: 0;}
+  .routine .rc-high-row .subj{font-family: var(--rc-serif); font-size: 12.5px; color: var(--rc-ink-soft); margin-top: 2px; line-height: 1.35;}
+  .routine .rc-high-row .summ{font-family: var(--rc-serif); font-size: 12px; color: var(--rc-ink-mute); margin-top: 4px; line-height: 1.4; font-style: italic;}
+
+  .routine .rc-fyi-row{display:flex; align-items:baseline; justify-content:space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--rc-hair); transition: background .15s ease;}
+  .routine .rc-fyi-row:hover{background: rgba(31, 27, 22, 0.025);}
+  .routine .rc-fyi-row .from{font-family: var(--mono); font-size: 10px; letter-spacing: 0.10em; text-transform: uppercase; color: var(--rc-ink-soft); font-weight: 600;}
+  .routine .rc-fyi-row .subj{font-family: var(--rc-serif); font-size: 12.5px; color: var(--rc-ink-soft); margin-left: 8px;}
+  .routine .rc-fyi-row .time{font-family: var(--mono); font-size: 10px; color: var(--rc-ink-mute); flex-shrink: 0;}
+  .routine .rc-fyi-row .body{min-width: 0; flex: 1;}
+
+  .routine .rc-actions{position: absolute; right: 8px; bottom: 8px; display:flex; gap: 5px; opacity: 0; transition: opacity .15s ease; background: linear-gradient(90deg, rgba(251,247,239,0) 0%, var(--rc-urgent-bg) 30%); padding-left: 18px;}
+  .routine .rc-high-row .rc-actions{background: linear-gradient(90deg, rgba(240,235,227,0) 0%, var(--rc-bg) 30%);}
+  .routine .rc-urgent-card:hover .rc-actions, .routine .rc-high-row:hover .rc-actions{opacity: 1;}
+  .routine .rc-actions button{font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--rc-ink-soft); background: transparent; border: 1px solid var(--rc-hair-strong); border-radius: 4px; padding: 3px 7px; cursor: pointer; font-weight: 500;}
+  .routine .rc-actions button:hover{background: rgba(31, 27, 22, 0.06); border-color: rgba(31, 27, 22, 0.30);}
+
+  .routine .rc-dismissed{padding: 8px 10px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; color: var(--rc-ink-mute); text-transform: uppercase; background: transparent; border: 1px dashed var(--rc-hair-strong); border-radius: 6px; margin-bottom: 8px;}
+  .routine .rc-high-row.rc-dismissed{padding: 6px 0; border: 0; border-bottom: 1px solid var(--rc-hair); border-radius: 0; letter-spacing: 0.10em; margin-bottom: 0;}
+
+  .routine .rc-more{margin-top: 8px; background: transparent; border: none; font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--rc-ink-mute); cursor: pointer; padding: 4px 0; font-weight: 500;}
 
   /* Now Playing */
   .playing{grid-column: 3/4; grid-row: 3/4; display:flex; flex-direction:column}
@@ -487,46 +564,24 @@
     </div>
   </section>
 
-  <!-- INBOX -->
-  <section class="card inbox">
-    <div class="card-head">
-      <span class="mono"><em>07 //</em>INBOX · CRITICAL</span>
-      <span class="mono">4 unread</span>
+  <!-- ROUTINE -->
+  <section class="card routine" id="routine">
+    <div class="rc-head">
+      <div class="rc-title"><em>07</em><em>//</em><span>Routine</span></div>
+      <div class="rc-meta"><span class="counts">47/9</span><span class="flagged">flagged</span></div>
     </div>
-    <div class="list">
-      <div class="row">
-        <div class="ava a">ML</div>
-        <div>
-          <div class="name">Maya Lin <span class="tag">Urgent</span></div>
-          <div class="prev">Re: v2.7 assets — need your sign-off today</div>
+    <div class="rc-subrow">
+      <div class="rc-summary">Reviewed your inbox at <b>12:04</b>. Two messages need a reply today; three more are worth a glance before you wrap.</div>
+      <div class="rc-next">next · 18:00
+        <div class="rc-pop">
+          <div class="lbl">Daily · 3 runs</div>
+          <div class="run">06:00 &nbsp; morning brief</div>
+          <div class="run current">12:00 &nbsp; midday — last run</div>
+          <div class="run">18:00 &nbsp; evening wrap</div>
         </div>
-        <div class="time">12m</div>
-      </div>
-      <div class="row">
-        <div class="ava b">TH</div>
-        <div>
-          <div class="name">Theo Harris</div>
-          <div class="prev">Moved our sync · new calendar invite attached</div>
-        </div>
-        <div class="time">48m</div>
-      </div>
-      <div class="row">
-        <div class="ava c">EN</div>
-        <div>
-          <div class="name">Eliza N.</div>
-          <div class="prev">8pm still on? Booked us a corner table ♥</div>
-        </div>
-        <div class="time">2h</div>
-      </div>
-      <div class="row">
-        <div class="ava d">AC</div>
-        <div>
-          <div class="name">Arc Collective</div>
-          <div class="prev">Residency application accepted · welcome packet</div>
-        </div>
-        <div class="time">5h</div>
       </div>
     </div>
+    <div class="rc-body" id="rcBody"></div>
   </section>
 
   <!-- NOW PLAYING -->
