@@ -116,8 +116,12 @@
   .clock .s{font-size:20px; color: var(--ink-3); margin-left:4px; align-self:flex-end; margin-bottom:6px}
   .hero-r .sub{margin-top: 4px; font-family: var(--mono); font-size: 10.5px; letter-spacing:.12em; color: var(--ink-3); text-transform:uppercase}
 
+  /* Right column: Vitals + Project share col 4 50/50 */
+  .right-col{grid-column: 4/5; grid-row: 1/4; display:grid; grid-template-rows: 1fr 1fr; gap: 12px; min-height: 0;}
+  .right-col .card{min-height: 0;}
+
   /* Vitals */
-  .vitals{grid-column: 4/5; grid-row: 1/3; display:flex; flex-direction:column; gap: 10px;}
+  .vitals{display:flex; flex-direction:column; gap: 10px;}
   .vitals .steps{display:flex; align-items:baseline; gap:8px; margin-top:2px}
   .vitals .steps b{font-family: var(--serif); font-weight:500; font-size: 34px; letter-spacing:-.01em}
   .vitals .steps .u{font-family:var(--mono); font-size: 10px; letter-spacing:.12em; color:var(--ink-3); text-transform:uppercase}
@@ -129,11 +133,6 @@
   .bio .l{font-family:var(--mono); font-size: 10px; color:var(--ink-3); letter-spacing:.1em; text-transform:uppercase}
   .bio .v{font-family: var(--serif); font-weight:500; font-size: 22px; letter-spacing:-.01em; margin-top:1px}
   .bio .v small{font-family: var(--mono); font-size: 10px; color:var(--ink-3); font-weight:400; letter-spacing:.08em; margin-left:2px}
-  .rings{display:grid; grid-template-columns: repeat(3,1fr); gap:8px; margin-top: 10px}
-  .ring{display:flex; flex-direction:column; align-items:center; gap:4px}
-  .ring svg{display:block}
-  .ring .n{font-family: var(--mono); font-size: 10.5px; letter-spacing:.04em; font-weight:500}
-  .ring .l{font-family: var(--mono); font-size: 9.5px; letter-spacing:.14em; color:var(--ink-3); text-transform:uppercase}
 
   /* Left column stack: Habits / Thought (expanded) */
   .stack{grid-column:1/2; grid-row:2/4; display:grid; grid-template-rows: 1fr 2fr; gap: 12px;}
@@ -242,7 +241,8 @@
   .np-ctrl button.play{width:28px; height:28px; border-radius:50%; background: var(--ink); color: var(--card)}
 
   /* Project */
-  .project{grid-column: 4/5; grid-row: 3/4; display:flex; flex-direction:column}
+  .project{display:flex; flex-direction:column; min-height: 0;}
+  .project .tasks{overflow-y:auto; min-height: 0;}
   .project h3{font-family: var(--serif); font-weight:500; font-size: 18px; margin: 4px 0 0; letter-spacing:-.01em}
   .project h3 em{font-style:italic; font-weight:400}
   .project .bc{font-family: var(--mono); font-size: 10px; color: var(--ink-3); letter-spacing:.1em; text-transform:uppercase; margin-top:3px}
@@ -337,6 +337,7 @@
   </section>
 
   <!-- VITALS -->
+  <div class="right-col">
   <section class="card vitals">
     <div class="card-head">
       <span class="mono"><em>03 //</em>VITALS</span>
@@ -367,33 +368,40 @@
       <div class="bio"><div class="l">HRV</div><div class="v">54<small>ms</small></div></div>
       <div class="bio"><div class="l">Water</div><div class="v">1.8<small>L</small></div></div>
     </div>
-    <div class="rings">
-      <div class="ring">
-        <svg width="56" height="56" viewBox="0 0 36 36">
-          <circle cx="18" cy="18" r="14" fill="none" stroke="oklch(0.88 0.03 50)" stroke-width="3"/>
-          <circle cx="18" cy="18" r="14" fill="none" stroke="oklch(0.62 0.17 35)" stroke-width="3" stroke-dasharray="88 100" stroke-linecap="round" transform="rotate(-90 18 18)"/>
-        </svg>
-        <div class="n">480/650</div>
-        <div class="l">Move</div>
+  </section>
+
+  <!-- PROJECT -->
+  <section class="card project">
+    <div class="card-head">
+      <span class="mono"><em>09 //</em>ACTIVE PROJECT</span>
+      <span class="mono">Due Fri</span>
+    </div>
+    <h3>Jerrod OS · <em>v2.7</em></h3>
+    <div class="bc">Refresh · Widgets · Motion</div>
+    <div class="progress">
+      <div class="lab"><span>Progress</span><span id="pct">68%</span></div>
+      <div class="bar"><i id="bar" style="width:68%"></i></div>
+    </div>
+    <div class="tasks" id="tasks">
+      <div class="task done" data-t="1">
+        <div class="box"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M5 12l5 5 9-11"/></svg></div>
+        <div class="label">Wireframes · glass grid</div>
       </div>
-      <div class="ring">
-        <svg width="56" height="56" viewBox="0 0 36 36">
-          <circle cx="18" cy="18" r="14" fill="none" stroke="oklch(0.88 0.03 140)" stroke-width="3"/>
-          <circle cx="18" cy="18" r="14" fill="none" stroke="oklch(0.58 0.14 150)" stroke-width="3" stroke-dasharray="84 100" stroke-linecap="round" transform="rotate(-90 18 18)"/>
-        </svg>
-        <div class="n">42/50</div>
-        <div class="l">Exercise</div>
+      <div class="task done" data-t="2">
+        <div class="box"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M5 12l5 5 9-11"/></svg></div>
+        <div class="label">Set type · Fraunces</div>
       </div>
-      <div class="ring">
-        <svg width="56" height="56" viewBox="0 0 36 36">
-          <circle cx="18" cy="18" r="14" fill="none" stroke="oklch(0.88 0.03 240)" stroke-width="3"/>
-          <circle cx="18" cy="18" r="14" fill="none" stroke="oklch(0.58 0.12 235)" stroke-width="3" stroke-dasharray="75 100" stroke-linecap="round" transform="rotate(-90 18 18)"/>
-        </svg>
-        <div class="n">9/12</div>
-        <div class="l">Stand</div>
+      <div class="task" data-t="3">
+        <div class="box"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M5 12l5 5 9-11"/></svg></div>
+        <div class="label">Motion choreography</div>
+      </div>
+      <div class="task" data-t="4">
+        <div class="box"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M5 12l5 5 9-11"/></svg></div>
+        <div class="label">Prepare hand-off deck</div>
       </div>
     </div>
   </section>
+  </div>
 
   <!-- LEFT STACK: Habits / Thought (expanded) -->
   <div class="stack">
@@ -549,38 +557,6 @@
         </button>
       </div>
       <span>5:32</span>
-    </div>
-  </section>
-
-  <!-- PROJECT -->
-  <section class="card project">
-    <div class="card-head">
-      <span class="mono"><em>09 //</em>ACTIVE PROJECT</span>
-      <span class="mono">Due Fri</span>
-    </div>
-    <h3>Jerrod OS · <em>v2.7</em></h3>
-    <div class="bc">Refresh · Widgets · Motion</div>
-    <div class="progress">
-      <div class="lab"><span>Progress</span><span id="pct">68%</span></div>
-      <div class="bar"><i id="bar" style="width:68%"></i></div>
-    </div>
-    <div class="tasks" id="tasks">
-      <div class="task done" data-t="1">
-        <div class="box"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M5 12l5 5 9-11"/></svg></div>
-        <div class="label">Wireframes · glass grid</div>
-      </div>
-      <div class="task done" data-t="2">
-        <div class="box"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M5 12l5 5 9-11"/></svg></div>
-        <div class="label">Set type · Fraunces</div>
-      </div>
-      <div class="task" data-t="3">
-        <div class="box"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M5 12l5 5 9-11"/></svg></div>
-        <div class="label">Motion choreography</div>
-      </div>
-      <div class="task" data-t="4">
-        <div class="box"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M5 12l5 5 9-11"/></svg></div>
-        <div class="label">Prepare hand-off deck</div>
-      </div>
     </div>
   </section>
 

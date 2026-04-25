@@ -105,16 +105,6 @@ function renderVitals(v) {
     const units = { heart_bpm: 'bpm', sleep_hours: 'hrs', hrv_ms: 'ms', water_l: 'L' }[key];
     el.querySelector('.v').innerHTML = `${raw}<small>${units}</small>`;
   });
-  if (v.rings) {
-    const ringOrder = ['move','exercise','stand'];
-    $$('.card.vitals .rings .ring').forEach((el, i) => {
-      const r = v.rings[ringOrder[i]]; if (!r) return;
-      const pct = Math.round((r.value / r.goal) * 100);
-      const arc = el.querySelectorAll('circle')[1];
-      if (arc) arc.setAttribute('stroke-dasharray', `${pct} 100`);
-      const n = el.querySelector('.n'); if (n) n.textContent = `${r.value}/${r.goal}`;
-    });
-  }
 }
 
 function renderThought(t) {
