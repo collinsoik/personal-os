@@ -5,7 +5,6 @@ from functools import lru_cache
 class Settings:
     db_path: str = os.getenv("PERSONAL_OS_DB", "/data/personal-os.db")
     write_secret: str = os.getenv("PERSONAL_OS_WRITE_SECRET", "change-me")
-    mcp_token: str = os.getenv("PERSONAL_OS_MCP_TOKEN", "")
     oauth_issuer: str = os.getenv("PERSONAL_OS_OAUTH_ISSUER", "")
     oauth_client_id: str = os.getenv("PERSONAL_OS_OAUTH_CLIENT_ID", "")
     oauth_client_secret: str = os.getenv("PERSONAL_OS_OAUTH_CLIENT_SECRET", "")
