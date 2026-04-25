@@ -49,6 +49,21 @@ class ControlError(Exception):
 _pending_states: dict[str, float] = {}
 _STATE_TTL_SEC = 600
 
+# Set by `_get` on 429; `fetch_music_snapshot` short-circuits until this passes so
+# we honor Retry-After without an extra timer (poller idles 30s on a None return).
+_backoff_until: float = 0.0
+
+# TTL caches for slow-moving endpoints. Refetching `/me/top/tracks` and
+# `/me/player/recently-played` every 5s under the active poll cadence is what
+# earns us the rate limit; these change at most every minute or two.
+_top_cache: dict | None = None
+_top_cache_at: float = 0.0
+_TOP_TTL_SEC = 300
+
+_recent_cache: dict | None = None
+_recent_cache_at: float = 0.0
+_RECENT_TTL_SEC = 60
+
 
 def _purge_states() -> None:
     now = time.time()
@@ -176,6 +191,12 @@ async def _get(
     if r.status_code == 401:
         log.warning("Spotify 401 on %s", path)
         return None
+    if r.status_code == 429:
+        retry_after = int(r.headers.get("Retry-After", "5"))
+        global _backoff_until
+        _backoff_until = time.time() + retry_after
+        log.warning("Spotify 429 on %s — backing off for %ds", path, retry_after)
+        return None
     r.raise_for_status()
     return r.json()
 
@@ -205,18 +226,36 @@ def _hours_this_week(recently_played: list[dict]) -> float:
 
 
 async def fetch_music_snapshot(db: Session) -> dict | None:
+    if time.time() < _backoff_until:
+        return None
+
     token = await get_valid_access_token(db)
     if not token:
         return None
 
+    global _top_cache, _top_cache_at, _recent_cache, _recent_cache_at
+    now = time.time()
+
     async with httpx.AsyncClient(timeout=10.0) as client:
         playback = await _get(client, token, "/me/player")
-        top = await _get(
-            client, token, "/me/top/tracks", {"limit": 5, "time_range": "short_term"}
-        )
-        recent = await _get(
-            client, token, "/me/player/recently-played", {"limit": 50}
-        )
+
+        if _top_cache is None or now - _top_cache_at > _TOP_TTL_SEC:
+            fresh = await _get(
+                client, token, "/me/top/tracks", {"limit": 5, "time_range": "short_term"}
+            )
+            if fresh is not None:
+                _top_cache = fresh
+                _top_cache_at = now
+        top = _top_cache
+
+        if _recent_cache is None or now - _recent_cache_at > _RECENT_TTL_SEC:
+            fresh = await _get(
+                client, token, "/me/player/recently-played", {"limit": 50}
+            )
+            if fresh is not None:
+                _recent_cache = fresh
+                _recent_cache_at = now
+        recent = _recent_cache
 
     payload: dict[str, Any] = {
         "playing": False,
