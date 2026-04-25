@@ -5,6 +5,7 @@ from functools import lru_cache
 class Settings:
     db_path: str = os.getenv("PERSONAL_OS_DB", "/data/personal-os.db")
     write_secret: str = os.getenv("PERSONAL_OS_WRITE_SECRET", "change-me")
+    mcp_token: str = os.getenv("PERSONAL_OS_MCP_TOKEN", "")
     allowed_origins: list[str] = [
         o.strip()
         for o in os.getenv(

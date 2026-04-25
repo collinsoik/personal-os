@@ -12,6 +12,7 @@ from .dashboard import build_dashboard
 from .db import get_session, init_db
 from .deps import require_secret
 from .events import router as events_router
+from .mcp_server import mcp, mcp_app
 from .oauth import router as oauth_router
 from .routine import router as routine_router
 
@@ -20,10 +21,11 @@ from .routine import router as routine_router
 async def lifespan(_app: FastAPI):
     init_db()
     poller.start()
-    try:
-        yield
-    finally:
-        poller.stop()
+    async with mcp.session_manager.run():
+        try:
+            yield
+        finally:
+            poller.stop()
 
 
 app = FastAPI(title="Personal OS API", version="0.1.0", lifespan=lifespan)
@@ -39,6 +41,8 @@ app.include_router(oauth_router, prefix="/api")
 app.include_router(control_router, prefix="/api")
 app.include_router(events_router, prefix="/api")
 app.include_router(routine_router, prefix="/api")
+
+app.mount("/mcp", mcp_app)
 
 
 @app.get("/api/health")

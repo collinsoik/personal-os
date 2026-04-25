@@ -7,3 +7,4 @@ apscheduler==3.10.4
 python-dotenv==1.0.1
 wikiquote==0.1.18
 tzdata==2024.2
+mcp>=1.2.0
