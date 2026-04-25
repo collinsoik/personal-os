@@ -258,7 +258,7 @@ const ROUTINE_DATA = {
   ],
 };
 
-const routineState = { dismissals: {}, fyiExpanded: false, digest: null };
+const routineState = { fyiExpanded: false, digest: null };
 
 const ROUTINE_TONE_PALETTE = ['#F0C7B5','#E8C4B8','#C8D8C2','#BBD0DE','#E0D0B8','#D8C8E0','#C2D8D0'];
 function routineMono(name) {
@@ -282,9 +282,8 @@ function renderRoutine(digest) {
   const fyiHidden = fyiAll.length - fyiVisible.length;
 
   const urgentHtml = (d.urgent || []).map((it, i) => {
-    const dismiss = routineState.dismissals[it.id];
-    if (dismiss) {
-      return `<div class="rc-dismissed">${dismiss === 'done' ? '✓ marked done' : '↩ snoozed'} — ${escapeHtml(it.from)}</div>`;
+    if (it.dismissed) {
+      return `<div class="rc-dismissed">${it.dismissed === 'done' ? '✓ marked done' : '↩ snoozed'} — ${escapeHtml(it.from)}</div>`;
     }
     const mono = it.mono || routineMono(it.from);
     const tone = it.tone || routineTone(it.id, i);
@@ -311,9 +310,8 @@ function renderRoutine(digest) {
   }).join('');
 
   const highHtml = (d.high || []).map((it, i) => {
-    const dismiss = routineState.dismissals[it.id];
-    if (dismiss) {
-      return `<div class="rc-high-row rc-dismissed">${dismiss === 'done' ? '✓ done' : '↩ snoozed'} — ${escapeHtml(it.from)}</div>`;
+    if (it.dismissed) {
+      return `<div class="rc-high-row rc-dismissed">${it.dismissed === 'done' ? '✓ done' : '↩ snoozed'} — ${escapeHtml(it.from)}</div>`;
     }
     const mono = it.mono || routineMono(it.from);
     const tone = it.tone || routineTone(it.id, i);
@@ -336,7 +334,7 @@ function renderRoutine(digest) {
   }).join('');
 
   const fyiHtml = fyiVisible.map((it) => {
-    if (routineState.dismissals[it.id]) return '';
+    if (it.dismissed) return '';
     return `
       <div class="rc-fyi-row" data-id="${it.id}">
         <div class="body">
@@ -377,6 +375,44 @@ function renderRoutine(digest) {
   `;
 }
 
+function findRoutineItem(id) {
+  const d = routineState.digest;
+  if (!d) return null;
+  for (const bucket of ['urgent', 'high', 'fyi']) {
+    const list = d[bucket] || [];
+    const item = list.find(x => x.id === id);
+    if (item) return item;
+  }
+  return null;
+}
+
+async function dismissRoutineItem(id, action) {
+  const secret = PO_SECRET();
+  const item = findRoutineItem(id);
+  if (!item) return;
+  const previous = item.dismissed ?? null;
+  // Optimistic update
+  item.dismissed = action;
+  renderRoutine();
+  if (!secret) {
+    console.warn('routine dismiss: not unlocked, kept local-only');
+    return;
+  }
+  try {
+    const res = await fetch(`${API}/api/routine/dismiss`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-PO-Secret': secret },
+      body: JSON.stringify({ id, action }),
+      cache: 'no-store',
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  } catch (err) {
+    console.warn('routine dismiss failed:', err);
+    item.dismissed = previous;
+    renderRoutine();
+  }
+}
+
 document.addEventListener('click', (e) => {
   const btn = e.target.closest('.routine [data-act]');
   if (!btn) return;
@@ -388,8 +424,7 @@ document.addEventListener('click', (e) => {
   }
   const id = btn.dataset.id;
   if (id && (act === 'done' || act === 'snooze')) {
-    routineState.dismissals[id] = act === 'done' ? 'done' : 'snoozed';
-    renderRoutine();
+    dismissRoutineItem(id, act === 'done' ? 'done' : 'snoozed');
   }
 });
 

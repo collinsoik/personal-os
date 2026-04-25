@@ -10,9 +10,10 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 
 from . import events, models
 from .db import get_session
@@ -31,6 +32,11 @@ class RoutineDigest(BaseModel):
     fyi: list[dict[str, Any]] = []
 
 
+class DismissRequest(BaseModel):
+    id: str
+    action: str | None  # "done" | "snoozed" | null (null clears)
+
+
 def persist_digest(db: Session, payload: dict[str, Any]) -> None:
     now = datetime.utcnow()
     row = db.get(models.CachedPayload, "routine")
@@ -46,4 +52,37 @@ def persist_digest(db: Session, payload: dict[str, Any]) -> None:
 @router.post("/routine/digest")
 def ingest_digest(digest: RoutineDigest, db: Session = Depends(get_session)) -> dict[str, Any]:
     persist_digest(db, digest.model_dump())
+    return {"ok": True}
+
+
+@router.post("/routine/dismiss")
+def dismiss_item(req: DismissRequest, db: Session = Depends(get_session)) -> dict[str, Any]:
+    if req.action not in (None, "done", "snoozed"):
+        raise HTTPException(status_code=400, detail={"error": "action must be 'done', 'snoozed', or null"})
+
+    row = db.get(models.CachedPayload, "routine")
+    if row is None:
+        raise HTTPException(status_code=404, detail={"error": "no_digest"})
+
+    payload = row.payload
+    found = False
+    for bucket in ("urgent", "high", "fyi"):
+        for item in payload.get(bucket) or []:
+            if item.get("id") == req.id:
+                if req.action is None:
+                    item.pop("dismissed", None)
+                else:
+                    item["dismissed"] = req.action
+                found = True
+                break
+        if found:
+            break
+
+    if not found:
+        raise HTTPException(status_code=404, detail={"error": "id_not_found"})
+
+    flag_modified(row, "payload")
+    row.updated_at = datetime.utcnow()
+    db.commit()
+    events.broadcast("routine", payload)
     return {"ok": True}
