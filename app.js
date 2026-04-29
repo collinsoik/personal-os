@@ -270,12 +270,41 @@ function routineTone(id, idx) {
   return ROUTINE_TONE_PALETTE[h % ROUTINE_TONE_PALETTE.length];
 }
 
+function fmtRoutineTime(dt) {
+  return dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+}
+
+function renderRoutineSchedule(d) {
+  const ranAt = d && d.ranAt ? new Date(d.ranAt) : null;
+  const nextAt = d && d.nextAt ? new Date(d.nextAt) : null;
+  setText('.routine .rc-ran', ranAt ? fmtRoutineTime(ranAt) : '—');
+  setText('.routine .rc-next-time', nextAt ? fmtRoutineTime(nextAt) : '—');
+
+  const runs = document.querySelectorAll('.routine .rc-pop .run');
+  if (runs.length !== 3) return;
+  const labels = ['morning brief', 'midday', 'evening wrap'];
+  if (!ranAt) {
+    runs.forEach((el, i) => { el.textContent = `— ${labels[i]}`; el.classList.remove('current'); });
+    return;
+  }
+  const h = ranAt.getHours();
+  const slotIdx = h < 9 ? 0 : h < 15 ? 1 : 2;
+  const HOUR = 3600 * 1000;
+  const slots = [0, 1, 2].map((i) => new Date(ranAt.getTime() + (i - slotIdx) * 6 * HOUR));
+  runs.forEach((el, i) => {
+    const suffix = i === slotIdx ? ' — last run' : '';
+    el.innerHTML = `${escapeHtml(fmtRoutineTime(slots[i]))} &nbsp; ${escapeHtml(labels[i] + suffix)}`;
+    el.classList.toggle('current', i === slotIdx);
+  });
+}
+
 function renderRoutine(digest) {
   const body = document.getElementById('rcBody');
   if (!body) return;
   if (digest !== undefined) routineState.digest = digest;
   const d = routineState.digest || ROUTINE_DATA;
   setText('.routine .rc-meta .counts', `${d.scanned ?? 0}/${d.flagged ?? 0}`);
+  renderRoutineSchedule(d);
 
   const fyiAll = d.fyi || [];
   const fyiVisible = routineState.fyiExpanded ? fyiAll : fyiAll.slice(0, 3);
