@@ -241,7 +241,7 @@
   .routine .rc-summary b{color: var(--rc-ink); font-weight: 600;}
   .routine .rc-next{position: relative; font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--rc-ink-mute); white-space: nowrap; cursor: default;}
   .routine .rc-pop{position: absolute; right: 0; top: calc(100% + 8px); background: #1F1B16; color: #F0EBE3; padding: 10px 12px; border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.18); font-family: var(--mono); font-size: 10px; letter-spacing: 0.10em; z-index: 5; min-width: 160px; opacity: 0; pointer-events: none; transition: opacity .15s ease; text-transform: uppercase;}
-  .routine:hover .rc-pop, .routine .rc-next:hover .rc-pop{opacity: 1;}
+  .routine .rc-next:hover .rc-pop{opacity: 1;}
   .routine .rc-pop .lbl{opacity: .55; margin-bottom: 6px;}
   .routine .rc-pop .run{display:block;}
   .routine .rc-pop .run.current{color: #E8C4B8;}
